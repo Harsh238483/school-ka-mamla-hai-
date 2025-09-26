@@ -1,0 +1,452 @@
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { ThemeProvider } from "@/components/ThemeProvider";
+import { AnimatePresence, motion } from "framer-motion";
+import Index from "./pages/Index";
+import About from "./pages/About";
+import Academics from "./pages/Academics";
+import Facilities from "./pages/Facilities";
+import Admissions from "./pages/Admissions";
+import Gallery from "./pages/Gallery";
+import TopScorers from "./pages/TopScorers";
+import TopScorersLearnMore from "./pages/TopScorersLearnMore";
+import StudentProfile from "./pages/StudentProfile";
+import Events from "./pages/Events";
+import Contact from "./pages/Contact";
+import NotFound from "./pages/NotFound";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
+import Sitemap from "./pages/Sitemap";
+import CookiePolicy from "./pages/CookiePolicy";
+import FAQ from "./pages/FAQ";
+import PrimaryEducation from "./pages/PrimaryEducation";
+import SecondaryEducation from "./pages/SecondaryEducation";
+import HigherSecondary from "./pages/HigherSecondary";
+import ScienceStream from "./pages/ScienceStream";
+import CommerceStream from "./pages/CommerceStream";
+import ArtsStream from "./pages/ArtsStream";
+import OurTeachers from "./pages/OurTeachers";
+import TeacherProfile from "./pages/TeacherProfile";
+import AlumniNetwork from "./pages/AlumniNetwork";
+import Library from "./pages/Library";
+import CareerServices from "./pages/CareerServices";
+import Undergraduate from "./pages/Undergraduate";
+import Graduate from "./pages/Graduate";
+import PhdPrograms from "./pages/PhdPrograms";
+import OnlineLearning from "./pages/OnlineLearning";
+import PrincipalLogin from "./pages/PrincipalLogin";
+import PrincipalDashboard from "./pages/PrincipalDashboard";
+import TeacherLogin from "./pages/TeacherLogin";
+import TeacherDashboard from "./pages/TeacherDashboard";
+import AuthSignup from "./pages/AuthSignup";
+import CurriculumGuide from "./pages/CurriculumGuide";
+import CookieConsentBanner from "./components/CookieConsentBanner";
+
+const queryClient = new QueryClient();
+
+function AnimatedRoutes() {
+  const location = useLocation();
+  
+  return (
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
+        <Route path="/" element={
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.4 }}
+          >
+            <Index />
+          </motion.div>
+        } />
+        <Route path="/about" element={
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.4 }}
+          >
+            <About />
+          </motion.div>
+        } />
+        <Route path="/academics" element={
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.4 }}
+          >
+            <Academics />
+          </motion.div>
+        } />
+        <Route path="/curriculum-guide" element={
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.4 }}
+          >
+            <CurriculumGuide />
+          </motion.div>
+        } />
+        <Route path="/facilities" element={
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.4 }}
+          >
+            <Facilities />
+          </motion.div>
+        } />
+        <Route path="/admissions" element={
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.4 }}
+          >
+            <Admissions />
+          </motion.div>
+        } />
+        <Route path="/gallery" element={
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.4 }}
+          >
+            <Gallery />
+          </motion.div>
+        } />
+        <Route path="/top-scorers" element={
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.4 }}
+          >
+            <TopScorers />
+          </motion.div>
+        } />
+        <Route path="/top-scorers/learn-more" element={
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.4 }}
+          >
+            <TopScorersLearnMore />
+          </motion.div>
+        } />
+        <Route path="/student/:studentId" element={
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.4 }}
+          >
+            <StudentProfile />
+          </motion.div>
+        } />
+        <Route path="/events" element={
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.4 }}
+          >
+            <Events />
+          </motion.div>
+        } />
+        <Route path="/contact" element={
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.4 }}
+          >
+            <Contact />
+          </motion.div>
+        } />
+        <Route path="/privacy" element={
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.4 }}
+          >
+            <PrivacyPolicy />
+          </motion.div>
+        } />
+        <Route path="/terms" element={
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.4 }}
+          >
+            <TermsOfService />
+          </motion.div>
+        } />
+        <Route path="/sitemap" element={
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.4 }}
+          >
+            <Sitemap />
+          </motion.div>
+        } />
+        <Route path="/cookies" element={
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.4 }}
+          >
+            <CookiePolicy />
+          </motion.div>
+        } />
+        <Route path="/faq" element={
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.4 }}
+          >
+            <FAQ />
+          </motion.div>
+        } />
+        <Route path="/primary-education" element={
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.4 }}
+          >
+            <PrimaryEducation />
+          </motion.div>
+        } />
+        <Route path="/secondary-education" element={
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.4 }}
+          >
+            <SecondaryEducation />
+          </motion.div>
+        } />
+        <Route path="/higher-secondary" element={
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.4 }}
+          >
+            <HigherSecondary />
+          </motion.div>
+        } />
+        <Route path="/science-stream" element={
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.4 }}
+          >
+            <ScienceStream />
+          </motion.div>
+        } />
+        <Route path="/commerce-stream" element={
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.4 }}
+          >
+            <CommerceStream />
+          </motion.div>
+        } />
+        <Route path="/arts-stream" element={
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.4 }}
+          >
+            <ArtsStream />
+          </motion.div>
+        } />
+        <Route path="/our-teachers" element={
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.4 }}
+          >
+            <OurTeachers />
+          </motion.div>
+        } />
+        <Route path="/teacher/:teacherId" element={
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.4 }}
+          >
+            <TeacherProfile />
+          </motion.div>
+        } />
+        <Route path="/alumni-network" element={
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.4 }}
+          >
+            <AlumniNetwork />
+          </motion.div>
+        } />
+        <Route path="/library" element={
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.4 }}
+          >
+            <Library />
+          </motion.div>
+        } />
+        <Route path="/career-services" element={
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.4 }}
+          >
+            <CareerServices />
+          </motion.div>
+        } />
+        <Route path="/undergraduate" element={
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.4 }}
+          >
+            <Undergraduate />
+          </motion.div>
+        } />
+        <Route path="/graduate" element={
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.4 }}
+          >
+            <Graduate />
+          </motion.div>
+        } />
+        <Route path="/phd-programs" element={
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.4 }}
+          >
+            <PhdPrograms />
+          </motion.div>
+        } />
+        <Route path="/online-learning" element={
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.4 }}
+          >
+            <OnlineLearning />
+          </motion.div>
+        } />
+        <Route path="/principal" element={
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.4 }}
+          >
+            <PrincipalLogin />
+          </motion.div>
+        } />
+        <Route path="/principal-dashboard" element={
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.4 }}
+          >
+            <PrincipalDashboard />
+          </motion.div>
+        } />
+        <Route path="/teacher" element={
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.4 }}
+          >
+            <TeacherLogin />
+          </motion.div>
+        } />
+        <Route path="/teacher-dashboard" element={
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.4 }}
+          >
+            <TeacherDashboard />
+          </motion.div>
+        } />
+        <Route path="/signup" element={
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.4 }}
+          >
+            <AuthSignup />
+          </motion.div>
+        } />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </AnimatePresence>
+  );
+}
+
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="dark"
+      enableSystem
+      disableTransitionOnChange={false}
+    >
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AnimatedRoutes />
+          <CookieConsentBanner />
+        </BrowserRouter>
+      </TooltipProvider>
+    </ThemeProvider>
+  </QueryClientProvider>
+);
+
+export default App;
