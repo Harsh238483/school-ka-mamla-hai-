@@ -84,11 +84,11 @@ const About = () => {
   ];
 
   return (
-    <section className="section-padding bg-gradient-to-b from-background to-muted/20">
+    <section className="py-8 sm:py-16 px-4 sm:px-6 bg-gradient-to-b from-background to-muted/20">
       <div className="container-wide">
-        <div className="text-center mb-16 animate-fade-in">
+        <div className="text-center mb-8 sm:mb-16 animate-fade-in">
           <h2 
-            className="text-4xl md:text-5xl font-heading font-bold mb-6"
+            className="text-2xl sm:text-4xl md:text-5xl font-heading font-bold mb-4 sm:mb-6 px-2 sm:px-0"
             style={{ fontFamily: homepageData.fonts.heading }}
           >
             {homepageData.aboutTitle.split(' ').map((word, index) => 
@@ -100,19 +100,19 @@ const About = () => {
             )}
           </h2>
           <p 
-            className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed"
+            className="text-base sm:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed px-2 sm:px-0"
             style={{ fontFamily: homepageData.fonts.body }}
           >
             {homepageData.aboutSubtitle}
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-16 items-center mb-20">
+        <div className="grid lg:grid-cols-2 gap-8 sm:gap-16 items-center mb-12 sm:mb-20">
           {/* History & Mission */}
-          <div className="space-y-8 animate-slide-up">
-            <div className="space-y-6">
+          <div className="space-y-6 sm:space-y-8 animate-slide-up px-2 sm:px-0">
+            <div className="space-y-4 sm:space-y-6">
               <h3 
-                className="text-3xl font-heading font-semibold"
+                className="text-xl sm:text-3xl font-heading font-semibold"
                 style={{ fontFamily: homepageData.fonts.heading }}
               >
                 {homepageData.legacyTitle}
@@ -120,7 +120,7 @@ const About = () => {
               {homepageData.legacyContent.split('\n\n').map((paragraph, index) => (
                 <p 
                   key={index}
-                  className="text-lg text-muted-foreground leading-relaxed"
+                  className="text-base sm:text-lg text-muted-foreground leading-relaxed"
                   style={{ fontFamily: homepageData.fonts.body }}
                 >
                   {paragraph}
@@ -130,13 +130,13 @@ const About = () => {
 
             <div className="space-y-4">
               <h4 
-                className="text-2xl font-heading font-semibold text-gradient-gold"
+                className="text-lg sm:text-2xl font-heading font-semibold text-gradient-gold"
                 style={{ fontFamily: homepageData.fonts.heading }}
               >
                 {homepageData.missionTitle}
               </h4>
               <p 
-                className="text-lg text-muted-foreground italic bg-card/50 p-6 rounded-lg border border-border"
+                className="text-base sm:text-lg text-muted-foreground italic bg-card/50 p-4 sm:p-6 rounded-lg border border-border"
                 style={{ fontFamily: homepageData.fonts.body }}
               >
                 "{homepageData.missionContent}"
@@ -145,19 +145,19 @@ const About = () => {
           </div>
 
           {/* Values Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 px-2 sm:px-0">
             {values.map((value, index) => (
               <div
                 key={value.title}
-                className="card-3d p-6 group"
+                className="card-3d p-4 sm:p-6 group"
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
                 <div className="space-y-4">
                   <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-gold/20 to-gold/40 flex items-center justify-center group-hover:scale-110 transition-transform">
                     <value.icon className="h-6 w-6 text-gold" />
                   </div>
-                  <h4 className="text-xl font-heading font-semibold">{value.title}</h4>
-                  <p className="text-muted-foreground leading-relaxed">{value.description}</p>
+                  <h4 className="text-lg sm:text-xl font-heading font-semibold">{value.title}</h4>
+                  <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">{value.description}</p>
                 </div>
               </div>
             ))}
@@ -165,9 +165,9 @@ const About = () => {
         </div>
 
         {/* Vision Statement */}
-        <div className="text-center bg-gradient-to-r from-royal/10 via-crimson/5 to-royal/10 p-12 rounded-2xl border border-border animate-fade-in">
-          <h3 className="text-3xl font-heading font-semibold mb-6">Our Vision</h3>
-          <p className="text-xl text-muted-foreground max-w-4xl mx-auto leading-relaxed">
+        <div className="text-center bg-gradient-to-r from-royal/10 via-crimson/5 to-royal/10 p-6 sm:p-12 rounded-2xl border border-border animate-fade-in mx-2 sm:mx-0">
+          <h3 className="text-xl sm:text-3xl font-heading font-semibold mb-4 sm:mb-6">Our Vision</h3>
+          <p className="text-base sm:text-xl text-muted-foreground max-w-4xl mx-auto leading-relaxed px-2 sm:px-0">
             To be the world's leading educational institution, recognized for academic excellence, 
             innovative teaching, and the development of ethical leaders who will shape a better future for humanity.
           </p>

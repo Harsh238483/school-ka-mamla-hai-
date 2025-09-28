@@ -109,18 +109,18 @@ const Hero = () => {
         <div className="absolute inset-0 bg-black/40"></div>
       </div>
 
-      {/* Floating Elements */}
-      <div className="absolute top-20 left-10 w-20 h-20 rounded-full bg-gold/20 animate-float"></div>
-      <div className="absolute top-40 right-20 w-16 h-16 rounded-full bg-crimson/20 animate-float" style={{ animationDelay: "2s" }}></div>
-      <div className="absolute bottom-40 left-20 w-12 h-12 rounded-full bg-gold/30 animate-float" style={{ animationDelay: "4s" }}></div>
+      {/* Floating Elements - Hidden on mobile */}
+      <div className="absolute top-20 left-10 w-20 h-20 rounded-full bg-gold/20 animate-float hidden sm:block"></div>
+      <div className="absolute top-40 right-20 w-16 h-16 rounded-full bg-crimson/20 animate-float hidden sm:block" style={{ animationDelay: "2s" }}></div>
+      <div className="absolute bottom-40 left-20 w-12 h-12 rounded-full bg-gold/30 animate-float hidden sm:block" style={{ animationDelay: "4s" }}></div>
 
       {/* Content */}
-      <div className="relative z-10 container-wide section-padding text-center">
-        <div className="max-w-5xl mx-auto space-y-8 animate-slide-up">
+      <div className="relative z-10 container-wide px-4 sm:px-6 py-8 sm:py-16 text-center">
+        <div className="max-w-5xl mx-auto space-y-6 sm:space-y-8 animate-slide-up">
           {/* Main Heading */}
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             <h1 
-              className="text-5xl md:text-7xl lg:text-8xl font-heading font-bold leading-normal"
+              className="text-3xl xs:text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-heading font-bold leading-tight sm:leading-normal"
               style={{ fontFamily: homepageData.fonts.heading }}
             >
               {homepageData.heroTitle.split(' ').map((word, index) => (
@@ -133,7 +133,7 @@ const Hero = () => {
               ))}
             </h1>
             <p 
-              className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed"
+              className="text-base sm:text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed px-2 sm:px-0"
               style={{ fontFamily: homepageData.fonts.body }}
             >
               {homepageData.heroSubtitle}
@@ -141,7 +141,7 @@ const Hero = () => {
           </div>
 
           {/* Call to Action */}
-          <div className="flex flex-col sm:flex-row gap-6 justify-center items-center pt-8">
+          <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-center pt-6 sm:pt-8 px-4 sm:px-0">
             <Button variant="hero" size="xl" asChild>
               <Link to="/admissions" className="group">
                 {homepageData.heroButtonPrimary}
@@ -156,22 +156,22 @@ const Hero = () => {
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-16">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 pt-8 sm:pt-16 px-2 sm:px-0">
             {stats.map((stat, index) => (
               <div
                 key={stat.label}
-                className="card-3d p-8 text-center group"
+                className="card-3d p-4 sm:p-8 text-center group"
                 style={{ animationDelay: `${index * 0.2}s` }}
               >
                 <div className="flex flex-col items-center space-y-4">
-                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-gold/20 to-gold/40 flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <stat.icon className="h-8 w-8 text-gold" />
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-gold/20 to-gold/40 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <stat.icon className="h-6 w-6 sm:h-8 sm:w-8 text-gold" />
                   </div>
                   <div className="space-y-2">
-                    <div className="text-4xl font-heading font-bold text-gradient-gold">
+                    <div className="text-2xl sm:text-4xl font-heading font-bold text-gradient-gold">
                       {stat.value}
                     </div>
-                    <p className="text-muted-foreground text-lg">{stat.label}</p>
+                    <p className="text-muted-foreground text-base sm:text-lg">{stat.label}</p>
                   </div>
                 </div>
               </div>

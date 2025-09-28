@@ -1,7 +1,7 @@
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { motion, AnimatePresence } from "framer-motion";
-import { Calendar, FileText, Users, CheckCircle, Clock, DollarSign, GraduationCap, Award, ChevronRight, X, Menu } from "lucide-react";
+import { Calendar, FileText, Users, CheckCircle, Clock, DollarSign, GraduationCap, Award, ChevronRight, ChevronLeft, X, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button-variants";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,13 +14,11 @@ const Admissions = () => {
     lastName: "",
     email: "",
     phone: "",
-    citizenship: "",
-    level: "",
-    term: "",
-    program: "",
-    essay: "",
-    ref1: "",
-    refEmail: ""
+    class: "",
+    rollNumber: "",
+    aadhaarCard: null as File | null,
+    birthCertificate: null as File | null,
+    studentPhoto: null as File | null
   });
   
   const [currentStep, setCurrentStep] = useState(0);
@@ -34,6 +32,103 @@ const Admissions = () => {
   const [openFAQ, setOpenFAQ] = useState<number | null>(null);
   const [counters, setCounters] = useState({ fee: 0, decision: 0, aid: 0, countries: 0 });
   const [hasAnimated, setHasAnimated] = useState(false);
+  const [pricing, setPricing] = useState({ monthly: 5000, yearly: 50000 });
+  const [admissionsData, setAdmissionsData] = useState<any>({
+    hero: {
+      title: "Admissions that put your future first",
+      subtitle: "Join a vibrant, supportive community. Our application is fast, holistic, and designed to highlight what makes you, you.",
+      stats: {
+        applicationFee: "$0",
+        decisionTime: "14 days",
+        studentsReceiveAid: "92%",
+        countriesRepresented: "70+"
+      }
+    },
+    affordability: {
+      title: "Affordability",
+      subtitle: "Tuition and financial aid",
+      tabs: ["Tuition & Fees (2025)", "Scholarships & Grants", "Payment Plans"],
+      content: {
+        tuition: "Estimated tuition: $28,500 per year. Fees vary by program and credits. Contact us for a personalized breakdown.",
+        scholarships: "Automatic merit scholarships are awarded at the time of admission. Need-based grants available via aid application.",
+        payments: "Monthly, interest-free plans available. Third-party sponsorships supported."
+      }
+    },
+    campus: {
+      title: "See the campus",
+      subtitle: "Tour, info sessions, and counselor chats",
+      description: "Can't visit? Join a virtual info session or book a 1:1 with our admissions team.",
+      images: []
+    }
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  // Load pricing and admissions data from localStorage
+  useEffect(() => {
+    const loadData = () => {
+      try {
+        console.log('Loading admissions page data...');
+        
+        const savedPricing = localStorage.getItem('royal-academy-pricing');
+        if (savedPricing) {
+          setPricing(JSON.parse(savedPricing));
+        }
+
+        const savedAdmissionsData = localStorage.getItem('royal-academy-admissions');
+        if (savedAdmissionsData) {
+          const parsedData = JSON.parse(savedAdmissionsData);
+          console.log('Loading custom admissions data:', parsedData);
+          setAdmissionsData(prev => ({
+            ...prev,
+            ...parsedData,
+            // Ensure nested objects are properly merged
+            affordability: {
+              ...prev.affordability,
+              ...parsedData.affordability
+            },
+            campus: {
+              ...prev.campus,
+              ...parsedData.campus
+            }
+          }));
+        } else {
+          console.log('No custom admissions data - using defaults');
+        }
+      } catch (error) {
+        console.error('Error loading admissions data:', error);
+        // Keep default data, don't set to null
+        console.log('Using fallback default data');
+      }
+    };
+
+    // Load data initially
+    loadData();
+
+    // Listen for storage changes (when Principal updates data)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'royal-academy-admissions' || e.key === 'royal-academy-pricing') {
+        loadData();
+      }
+    };
+
+    // Listen for custom events (for same-tab updates)
+    const handleCustomUpdate = () => {
+      loadData();
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('admissions-data-updated', handleCustomUpdate);
+
+    // Also refresh every 5 seconds to ensure real-time updates
+    const refreshInterval = setInterval(loadData, 5000);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('admissions-data-updated', handleCustomUpdate);
+      clearInterval(refreshInterval);
+    };
+  }, []);
 
   // Scroll progress tracking
   useEffect(() => {
@@ -159,7 +254,7 @@ const Admissions = () => {
 
   // Get current pricing
   const getCurrentAmount = () => {
-    return subscriptionType === 'monthly' ? 1000 : 12000;
+    return subscriptionType === 'monthly' ? pricing.monthly : pricing.yearly;
   };
 
   const getCurrentAmountInPaise = () => {
@@ -296,32 +391,45 @@ const Admissions = () => {
     console.log('Current formData:', formData);
     
     // Basic validation for required fields from earlier steps
-    const required = [
+    const requiredTextFields = [
       formData.firstName,
       formData.lastName,
       formData.email,
-      formData.level,
-      formData.term,
-      formData.program,
+      formData.class,
+      formData.rollNumber,
+    ];
+    
+    const requiredFiles = [
+      formData.aadhaarCard,
+      formData.birthCertificate,
+      formData.studentPhoto
     ];
     
     console.log('Required fields check:', {
       firstName: formData.firstName,
       lastName: formData.lastName,
       email: formData.email,
-      level: formData.level,
-      term: formData.term,
-      program: formData.program
+      class: formData.class,
+      rollNumber: formData.rollNumber,
+      aadhaarCard: formData.aadhaarCard,
+      birthCertificate: formData.birthCertificate,
+      studentPhoto: formData.studentPhoto
     });
     
-    if (required.some(v => !v || !v.trim())) {
-      alert('Please complete the required fields (Personal Info and Academic Details) before submitting.');
+    if (requiredTextFields.some(v => !v || !v.trim())) {
+      alert('Please complete all required text fields (Personal Info and Academic Details).');
       // Navigate the user to the first incomplete step
       if (!formData.firstName || !formData.lastName || !formData.email) {
         setCurrentStep(0);
-      } else if (!formData.level || !formData.term || !formData.program) {
+      } else if (!formData.class || !formData.rollNumber) {
         setCurrentStep(1);
       }
+      return;
+    }
+    
+    if (requiredFiles.some(file => !file)) {
+      alert('Please upload all required documents (Aadhaar Card, Birth Certificate, and Student Photo).');
+      setCurrentStep(1);
       return;
     }
     
@@ -331,15 +439,17 @@ const Admissions = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (currentStep < 3) {
+    if (currentStep < 1) {
       setCurrentStep(currentStep + 1);
     } else {
       handlePayment();
     }
   };
 
+  // Remove loading screen - always show content
+
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-background">
       {/* Scroll Progress Bar */}
       <div 
         className="fixed top-0 left-0 h-1 bg-gradient-to-r from-gold to-crimson z-50 transition-all duration-300"
@@ -364,7 +474,7 @@ const Admissions = () => {
             className="fixed top-20 left-0 right-0 z-40 bg-gradient-to-r from-background/98 via-royal/5 to-background/98 backdrop-blur-xl border-b border-gold/20 shadow-lg"
           >
             <div className="container-wide">
-              <div className="flex items-center justify-between py-4 px-4">
+              <div className="flex items-center justify-between py-3 px-2 sm:py-4 sm:px-4">
                 {/* Desktop Navigation */}
                 <div className="hidden md:flex items-center space-x-8">
                   {[
@@ -382,7 +492,7 @@ const Admissions = () => {
                       transition={{ delay: index * 0.1 }}
                       whileHover={{ scale: 1.05, y: -2 }}
                       whileTap={{ scale: 0.95 }}
-                      className="relative px-4 py-2 text-sm font-medium text-muted-foreground hover:text-gold transition-all duration-300 rounded-lg hover:bg-gold/10 group"
+                      className="relative px-4 py-2 text-sm font-medium text-foreground hover:text-gold transition-all duration-300 rounded-lg hover:bg-gold/10 group"
                     >
                       {item.label}
                       <motion.div
@@ -394,7 +504,7 @@ const Admissions = () => {
                 </div>
 
                 {/* Mobile Navigation Menu */}
-                <div className="md:hidden flex items-center space-x-2 overflow-x-auto scrollbar-none">
+                <div className="md:hidden flex items-center space-x-2 overflow-x-auto scrollbar-none w-full">
                   {[
                     { href: "#process", label: "Process", icon: "📋" },
                     { href: "#requirements", label: "Requirements", icon: "📚" },
@@ -409,20 +519,24 @@ const Admissions = () => {
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: index * 0.05 }}
                       whileTap={{ scale: 0.9 }}
-                      className="flex flex-col items-center min-w-[60px] px-2 py-2 text-xs font-medium text-muted-foreground hover:text-gold transition-all duration-300 rounded-lg hover:bg-gold/10"
+                      className="flex flex-col items-center min-w-[50px] px-2 py-2 text-xs font-medium text-foreground hover:text-gold transition-all duration-300 rounded-lg hover:bg-gold/10"
                     >
                       <span className="text-lg mb-1">{item.icon}</span>
-                      <span className="whitespace-nowrap">{item.label}</span>
+                      <span className="whitespace-nowrap text-center leading-tight text-xs">
+                        {item.label}
+                      </span>
                     </motion.a>
                   ))}
                 </div>
                 
+                {/* Apply Now Button - Desktop Only */}
                 <motion.div
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 0.3 }}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
+                  className="hidden md:block flex-shrink-0"
                 >
                   <Button 
                     variant="gold" 
@@ -430,8 +544,7 @@ const Admissions = () => {
                     onClick={() => setShowModal(true)}
                     className="shadow-lg hover:shadow-xl transition-all duration-300"
                   >
-                    <span className="hidden sm:inline">Apply Now</span>
-                    <span className="sm:hidden">Apply</span>
+                    Apply Now
                   </Button>
                 </motion.div>
               </div>
@@ -441,7 +554,7 @@ const Admissions = () => {
       </AnimatePresence>
       
       {/* Hero Section */}
-      <section className="relative pt-32 pb-20 overflow-hidden">
+      <section className="relative pt-24 sm:pt-32 pb-12 sm:pb-20 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-royal/20 via-background to-crimson/20"></div>
         
         {/* Floating Orbs */}
@@ -474,19 +587,19 @@ const Admissions = () => {
           />
         </div>
         
-        <div className="container-wide relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+        <div className="container-wide relative z-10 px-4 sm:px-6">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-12 items-center">
             <div className="lg:col-span-7">
               <motion.div
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6 }}
               >
-                <h1 className="text-5xl md:text-6xl font-heading font-bold mb-6">
-                  Admissions that put your <span className="text-gradient-gold">future first</span>
+                <h1 className="text-3xl sm:text-5xl md:text-6xl font-heading font-bold mb-4 sm:mb-6 leading-tight text-gradient-gold">
+                  {admissionsData?.hero?.title || "Admissions that put your future first"}
                 </h1>
-                <p className="text-xl text-muted-foreground max-w-2xl leading-relaxed mb-8">
-                  Join a vibrant, supportive community. Our application is fast, holistic, and designed to highlight what makes you, you.
+                <p className="text-base sm:text-xl text-muted-foreground max-w-2xl leading-relaxed mb-6 sm:mb-8">
+                  {admissionsData?.hero?.subtitle || "Join a vibrant, supportive community. Our application is fast, holistic, and designed to highlight what makes you, you."}
                 </p>
                 <div className="flex flex-wrap gap-4 mb-12">
                   <Button variant="hero" size="xl" onClick={() => setShowModal(true)}>
@@ -504,23 +617,31 @@ const Admissions = () => {
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.3 }}
-                className="grid grid-cols-2 lg:grid-cols-4 gap-6"
+                className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6"
               >
-                <div className="card-3d p-4 text-center">
-                  <div className="text-3xl font-heading font-bold text-gradient-gold">${counters.fee}</div>
-                  <div className="text-sm text-muted-foreground font-medium">Application Fee</div>
+                <div className="card-3d p-3 sm:p-4 text-center">
+                  <div className="text-2xl sm:text-3xl font-heading font-bold text-gradient-gold">
+                    {admissionsData?.hero?.stats?.applicationFee || "$0"}
+                  </div>
+                  <div className="text-xs sm:text-sm text-muted-foreground font-medium">Application Fee</div>
                 </div>
-                <div className="card-3d p-4 text-center">
-                  <div className="text-3xl font-heading font-bold text-gradient-gold">{counters.decision} days</div>
-                  <div className="text-sm text-muted-foreground font-medium">Avg. Decision Time</div>
+                <div className="card-3d p-3 sm:p-4 text-center">
+                  <div className="text-2xl sm:text-3xl font-heading font-bold text-gradient-gold">
+                    {admissionsData?.hero?.stats?.decisionTime || "14 days"}
+                  </div>
+                  <div className="text-xs sm:text-sm text-muted-foreground font-medium">Avg. Decision Time</div>
                 </div>
-                <div className="card-3d p-4 text-center">
-                  <div className="text-3xl font-heading font-bold text-gradient-gold">{counters.aid}%</div>
-                  <div className="text-sm text-muted-foreground font-medium">Students Receive Aid</div>
+                <div className="card-3d p-3 sm:p-4 text-center">
+                  <div className="text-2xl sm:text-3xl font-heading font-bold text-gradient-gold">
+                    {admissionsData?.hero?.stats?.studentsReceiveAid || "92%"}
+                  </div>
+                  <div className="text-xs sm:text-sm text-muted-foreground font-medium">Students Receive Aid</div>
                 </div>
-                <div className="card-3d p-4 text-center">
-                  <div className="text-3xl font-heading font-bold text-gradient-gold">{counters.countries}+</div>
-                  <div className="text-sm text-muted-foreground font-medium">Countries Represented</div>
+                <div className="card-3d p-3 sm:p-4 text-center">
+                  <div className="text-2xl sm:text-3xl font-heading font-bold text-gradient-gold">
+                    {admissionsData?.hero?.stats?.countriesRepresented || "70+"}
+                  </div>
+                  <div className="text-xs sm:text-sm text-muted-foreground font-medium">Countries Represented</div>
                 </div>
               </motion.div>
             </div>
@@ -553,9 +674,15 @@ const Admissions = () => {
             transition={{ duration: 0.6 }}
             className="text-center mb-16"
           >
-            <div className="text-sm font-bold text-gold uppercase tracking-wider mb-4">How it works</div>
-            <h2 className="text-4xl font-heading font-bold mb-6">Your path to admission</h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">A clear, supportive process from inquiry to enrollment. Each step unlocks as you're ready.</p>
+            <div className="text-sm font-bold text-gold uppercase tracking-wider mb-4">
+              {admissionsData?.process?.title || "How it works"}
+            </div>
+            <h2 className="text-4xl font-heading font-bold mb-6">
+              {admissionsData?.process?.subtitle || "Your path to admission"}
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              A clear, supportive process from inquiry to enrollment. Each step unlocks as you're ready.
+            </p>
           </motion.div>
 
           <div className="relative">
@@ -563,7 +690,7 @@ const Admissions = () => {
             <div className="absolute left-8 top-0 bottom-0 w-1 bg-gradient-to-b from-gold to-crimson opacity-30 hidden lg:block" />
             
             <div className="space-y-8">
-              {admissionProcess.map((step, index) => (
+              {(admissionsData?.process?.steps || admissionProcess).map((step, index) => (
                 <motion.div
                   key={step.title}
                   initial={{ opacity: 0, x: index % 2 === 0 ? -50 : 50 }}
@@ -626,15 +753,21 @@ const Admissions = () => {
             transition={{ duration: 0.6 }}
             className="text-center mb-16"
           >
-            <div className="text-sm font-bold text-gold uppercase tracking-wider mb-4">Requirements</div>
-            <h2 className="text-4xl font-heading font-bold mb-6">What you'll need to apply</h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">We review every application in context. If anything's hard to get, let us know and we'll help you find a path forward.</p>
+            <div className="text-sm font-bold text-gold uppercase tracking-wider mb-4">
+              {admissionsData?.requirements?.title || "Requirements"}
+            </div>
+            <h2 className="text-4xl font-heading font-bold mb-6">
+              {admissionsData?.requirements?.subtitle || "What you'll need to apply"}
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              We review every application in context. If anything's hard to get, let us know and we'll help you find a path forward.
+            </p>
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
-            {requirements.map((req, index) => (
+            {(admissionsData?.requirements?.categories || requirements).map((req, index) => (
               <motion.div
-                key={req.category}
+                key={req.title || req.category}
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 whileHover={{ 
@@ -649,9 +782,9 @@ const Admissions = () => {
                 }}
                 className="card-3d p-8"
               >
-                <h3 className="text-2xl font-heading font-semibold mb-6 text-gradient-gold">{req.category}</h3>
+                <h3 className="text-2xl font-heading font-semibold mb-6 text-gradient-gold">{req.title || req.category}</h3>
                 <div className="space-y-4">
-                  {req.items.map((item, idx) => (
+                  {(req.items || []).map((item, idx) => (
                     <motion.div
                       key={item}
                       initial={{ opacity: 0, x: -10 }}
@@ -675,35 +808,34 @@ const Admissions = () => {
 
           {/* Additional Requirements Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="card-3d p-6"
-            >
-              <h3 className="text-xl font-heading font-semibold mb-4 text-gradient-gold">International Students</h3>
-              <p className="text-muted-foreground">English proficiency (IELTS/TOEFL/Duolingo), credential evaluation, financial documentation.</p>
-            </motion.div>
-            
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="card-3d p-6"
-            >
-              <h3 className="text-xl font-heading font-semibold mb-4 text-gradient-gold">Transfer Applicants</h3>
-              <p className="text-muted-foreground">College transcripts and course syllabi for credit evaluation.</p>
-            </motion.div>
-            
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="card-3d p-6"
-            >
-              <h3 className="text-xl font-heading font-semibold mb-4 text-gradient-gold">Accommodations</h3>
-              <p className="text-muted-foreground">We provide reasonable accommodations—contact us to discuss your needs.</p>
-            </motion.div>
+            {(admissionsData?.requirements?.specialSections || [
+              {
+                id: "international",
+                title: "International Students",
+                description: "English proficiency (IELTS/TOEFL/Duolingo), credential evaluation, financial documentation."
+              },
+              {
+                id: "transfer",
+                title: "Transfer Applicants",
+                description: "College transcripts and course syllabi for credit evaluation."
+              },
+              {
+                id: "accommodations",
+                title: "Accommodations",
+                description: "We provide reasonable accommodations—contact us to discuss your needs."
+              }
+            ]).map((section, index) => (
+              <motion.div
+                key={section.id}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                className="card-3d p-6"
+              >
+                <h3 className="text-xl font-heading font-semibold mb-4 text-gradient-gold">{section.title}</h3>
+                <p className="text-muted-foreground">{section.description}</p>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
@@ -717,13 +849,19 @@ const Admissions = () => {
             transition={{ duration: 0.6 }}
             className="text-center mb-16"
           >
-            <div className="text-sm font-bold text-gold uppercase tracking-wider mb-4">Important dates</div>
-            <h2 className="text-4xl font-heading font-bold mb-6">Application deadlines</h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">We offer multiple rounds. Applications are reviewed on a rolling basis after each deadline.</p>
+            <div className="text-sm font-bold text-gold uppercase tracking-wider mb-4">
+              {admissionsData?.dates?.title || "Important dates"}
+            </div>
+            <h2 className="text-4xl font-heading font-bold mb-6">
+              {admissionsData?.dates?.subtitle || "Application deadlines"}
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              We offer multiple rounds. Applications are reviewed on a rolling basis after each deadline.
+            </p>
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {deadlines.map((deadline, index) => (
+            {(admissionsData?.dates?.deadlines || deadlines).map((deadline, index) => (
               <motion.div
                 key={deadline.title}
                 initial={{ opacity: 0, scale: 0.9 }}
@@ -750,9 +888,9 @@ const Admissions = () => {
                 <div className="flex-1">
                   <h3 className="text-xl font-heading font-semibold mb-2 text-gradient-gold">{deadline.title}</h3>
                   <p className="text-muted-foreground mb-3">{deadline.description}</p>
-                  {deadline.badges.length > 0 && (
+                  {(deadline.features || deadline.badges)?.length > 0 && (
                     <div className="flex flex-wrap gap-2">
-                      {deadline.badges.map((badge, idx) => (
+                      {(deadline.features || deadline.badges || []).map((badge, idx) => (
                         <span key={idx} className="px-3 py-1 bg-gold/10 text-gold rounded-full text-sm font-medium">
                           {badge}
                         </span>
@@ -769,15 +907,26 @@ const Admissions = () => {
       {/* Tuition & Financial Aid */}
       <section id="tuition" className="section-padding bg-gradient-to-b from-background to-muted/20">
         <div className="container-wide">
+          {/* Debug info */}
+          <div className="mb-4 p-2 bg-red-100 text-red-800 text-xs">
+            Affordability Debug: {JSON.stringify(admissionsData?.affordability ? 'Data exists' : 'No data')}
+          </div>
+          
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             className="text-center mb-16"
           >
-            <div className="text-sm font-bold text-gold uppercase tracking-wider mb-4">Affordability</div>
-            <h2 className="text-4xl font-heading font-bold mb-6">Tuition and financial aid</h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">We work with every admitted student to build a smart, sustainable plan.</p>
+            <div className="text-sm font-bold text-gold uppercase tracking-wider mb-4">
+              {admissionsData?.affordability?.title || "Affordability"}
+            </div>
+            <h2 className="text-4xl font-heading font-bold mb-6">
+              {admissionsData?.affordability?.subtitle || "Tuition and financial aid"}
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              We work with every admitted student to build a smart, sustainable plan.
+            </p>
           </motion.div>
 
           {/* Accordion-style tuition details */}
@@ -789,11 +938,13 @@ const Admissions = () => {
               className="card-3d p-6 group"
             >
               <summary className="flex items-center justify-between cursor-pointer list-none">
-                <span className="text-xl font-heading font-semibold">Tuition & Fees (2025)</span>
+                <span className="text-xl font-heading font-semibold">
+                  {admissionsData?.affordability?.tabs?.[0] || "Tuition & Fees (2025)"}
+                </span>
                 <ChevronRight className="h-5 w-5 text-gold transition-transform group-open:rotate-90" />
               </summary>
               <div className="mt-4 pt-4 border-t border-border text-muted-foreground">
-                Estimated tuition: $28,500 per year. Fees vary by program and credits. Contact us for a personalized breakdown.
+                {admissionsData?.affordability?.content?.tuition || "Estimated tuition: $28,500 per year. Fees vary by program and credits. Contact us for a personalized breakdown."}
               </div>
             </motion.details>
 
@@ -804,11 +955,13 @@ const Admissions = () => {
               className="card-3d p-6 group"
             >
               <summary className="flex items-center justify-between cursor-pointer list-none">
-                <span className="text-xl font-heading font-semibold">Scholarships & Grants</span>
+                <span className="text-xl font-heading font-semibold">
+                  {admissionsData?.affordability?.tabs?.[1] || "Scholarships & Grants"}
+                </span>
                 <ChevronRight className="h-5 w-5 text-gold transition-transform group-open:rotate-90" />
               </summary>
               <div className="mt-4 pt-4 border-t border-border text-muted-foreground">
-                Automatic merit scholarships are awarded at the time of admission. Need-based grants available via aid application.
+                {admissionsData?.affordability?.content?.scholarships || "Automatic merit scholarships are awarded at the time of admission. Need-based grants available via aid application."}
               </div>
             </motion.details>
 
@@ -819,11 +972,13 @@ const Admissions = () => {
               className="card-3d p-6 group"
             >
               <summary className="flex items-center justify-between cursor-pointer list-none">
-                <span className="text-xl font-heading font-semibold">Payment Plans</span>
+                <span className="text-xl font-heading font-semibold">
+                  {admissionsData?.affordability?.tabs?.[2] || "Payment Plans"}
+                </span>
                 <ChevronRight className="h-5 w-5 text-gold transition-transform group-open:rotate-90" />
               </summary>
               <div className="mt-4 pt-4 border-t border-border text-muted-foreground">
-                Monthly, interest-free plans available. Third-party sponsorships supported.
+                {admissionsData?.affordability?.content?.payments || "Monthly, interest-free plans available. Third-party sponsorships supported."}
               </div>
             </motion.details>
           </div>
@@ -836,11 +991,86 @@ const Admissions = () => {
             className="card-3d p-8 bg-gradient-to-r from-gold/5 via-transparent to-crimson/5 border-dashed"
           >
             <div className="text-center">
-              <div className="text-sm font-bold text-gold uppercase tracking-wider mb-4">See the campus</div>
-              <h3 className="text-3xl font-heading font-bold mb-4">Tour, info sessions, and counselor chats</h3>
+              <div className="text-sm font-bold text-gold uppercase tracking-wider mb-4">
+                {admissionsData?.campus?.title || "See the campus"}
+              </div>
+              <h3 className="text-3xl font-heading font-bold mb-4">
+                {admissionsData?.campus?.subtitle || "Tour, info sessions, and counselor chats"}
+              </h3>
               <p className="text-lg text-muted-foreground mb-6 max-w-2xl mx-auto">
-                Can't visit? Join a virtual info session or book a 1:1 with our admissions team.
+                {admissionsData?.campus?.description || "Can't visit? Join a virtual info session or book a 1:1 with our admissions team."}
               </p>
+              
+              {/* Campus Image Carousel */}
+              {admissionsData?.campus?.images && admissionsData.campus.images.length > 0 && (
+                <div className="mb-8 max-w-4xl mx-auto">
+                  <div className="relative">
+                    {/* Main Image */}
+                    <div className="relative h-64 md:h-80 rounded-xl overflow-hidden">
+                      <img
+                        src={admissionsData.campus.images[currentImageIndex]}
+                        alt={`Campus view ${currentImageIndex + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                      
+                      {/* Navigation Buttons */}
+                      {admissionsData.campus.images.length > 1 && (
+                        <>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setCurrentImageIndex(prev => 
+                              prev === 0 ? admissionsData.campus.images.length - 1 : prev - 1
+                            )}
+                            className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white"
+                          >
+                            <ChevronLeft className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setCurrentImageIndex(prev => 
+                              prev === admissionsData.campus.images.length - 1 ? 0 : prev + 1
+                            )}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white"
+                          >
+                            <ChevronRight className="h-4 w-4" />
+                          </Button>
+                        </>
+                      )}
+                      
+                      {/* Image Counter */}
+                      <div className="absolute bottom-2 right-2 bg-black/50 text-white px-2 py-1 rounded text-sm">
+                        {currentImageIndex + 1} / {admissionsData.campus.images.length}
+                      </div>
+                    </div>
+                    
+                    {/* Thumbnail Navigation */}
+                    {admissionsData.campus.images.length > 1 && (
+                      <div className="flex justify-center mt-4 gap-2 overflow-x-auto">
+                        {admissionsData.campus.images.map((image, index) => (
+                          <button
+                            key={index}
+                            onClick={() => setCurrentImageIndex(index)}
+                            className={`flex-shrink-0 w-16 h-12 rounded overflow-hidden border-2 transition-all ${
+                              index === currentImageIndex 
+                                ? 'border-gold shadow-lg' 
+                                : 'border-transparent opacity-70 hover:opacity-100'
+                            }`}
+                          >
+                            <img
+                              src={image}
+                              alt={`Campus thumbnail ${index + 1}`}
+                              className="w-full h-full object-cover"
+                            />
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+              
               <div className="flex flex-wrap gap-4 justify-center">
                 <Button variant="ghost" size="lg">Contact Admissions</Button>
                 <Button variant="gold" size="lg" onClick={() => setShowModal(true)}>Apply Now</Button>
@@ -864,7 +1094,7 @@ const Admissions = () => {
           </motion.div>
 
           <div className="max-w-4xl mx-auto space-y-4">
-            {faqData.map((faq, index) => (
+            {(admissionsData?.faqs || faqData).map((faq, index) => (
               <motion.div
                 key={index}
                 initial={{ opacity: 0, y: 20 }}
@@ -918,11 +1148,13 @@ const Admissions = () => {
               transition={{ duration: 0.5 }}
               className="card-3d p-8"
             >
-              <h3 className="text-2xl font-heading font-semibold mb-6 text-gradient-gold">Contact Admissions</h3>
+              <h3 className="text-2xl font-heading font-semibold mb-6 text-gradient-gold">
+                {admissionsData?.contact?.title || "Contact Admissions"}
+              </h3>
               <div className="space-y-4 text-muted-foreground">
-                <p>Email: admissions@royalacademy.edu</p>
-                <p>Phone: +1 (555) 123-4567</p>
-                <p>Hours: Mon–Fri, 9am–5pm</p>
+                <p>Email: {admissionsData?.contact?.email || "admissions@royalacademy.edu"}</p>
+                <p>Phone: {admissionsData?.contact?.phone || "+1 (555) 123-4567"}</p>
+                <p>Hours: {admissionsData?.contact?.hours || "Mon–Fri, 9am–5pm"}</p>
               </div>
             </motion.div>
             
@@ -934,9 +1166,9 @@ const Admissions = () => {
             >
               <h3 className="text-2xl font-heading font-semibold mb-6 text-gradient-gold">Mailing Address</h3>
               <div className="text-muted-foreground">
-                <p>Royal Academy</p>
-                <p>123 Excellence Boulevard</p>
-                <p>Academic City, AC 12345</p>
+                <p>{admissionsData?.contact?.address?.name || "Royal Academy"}</p>
+                <p>{admissionsData?.contact?.address?.street || "123 Excellence Boulevard"}</p>
+                <p>{admissionsData?.contact?.address?.city || "Academic City, AC 12345"}</p>
               </div>
             </motion.div>
           </div>
@@ -982,16 +1214,14 @@ const Admissions = () => {
                 <div className="w-full bg-muted rounded-full h-2">
                   <motion.div
                     className="bg-gradient-to-r from-gold to-crimson h-2 rounded-full"
-                    initial={{ width: "25%" }}
-                    animate={{ width: `${((currentStep + 1) / 4) * 100}%` }}
+                    initial={{ width: "50%" }}
+                    animate={{ width: `${((currentStep + 1) / 2) * 100}%` }}
                     transition={{ duration: 0.3 }}
                   />
                 </div>
                 <div className="flex justify-between text-xs text-muted-foreground mt-2">
                   <span className={currentStep >= 0 ? "text-gold" : ""}>Personal Info</span>
-                  <span className={currentStep >= 1 ? "text-gold" : ""}>Academic Details</span>
-                  <span className={currentStep >= 2 ? "text-gold" : ""}>Additional Info</span>
-                  <span className={currentStep >= 3 ? "text-gold" : ""}>Payment</span>
+                  <span className={currentStep >= 1 ? "text-gold" : ""}>Academic Details & Payment</span>
                 </div>
               </div>
 
@@ -1053,20 +1283,6 @@ const Admissions = () => {
                               onChange={handleInputChange}
                             />
                           </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="citizenship">Citizenship</Label>
-                            <select
-                              id="citizenship"
-                              name="citizenship"
-                              value={formData.citizenship}
-                              onChange={handleInputChange}
-                              className="w-full p-3 border border-border rounded-lg bg-background"
-                            >
-                              <option value="">Select...</option>
-                              <option value="domestic">Domestic</option>
-                              <option value="international">International</option>
-                            </select>
-                          </div>
                         </div>
                       </motion.div>
                     )}
@@ -1082,303 +1298,263 @@ const Admissions = () => {
                       >
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className="space-y-2">
-                            <Label htmlFor="level">Entry Level *</Label>
+                            <Label htmlFor="class">Class *</Label>
                             <select
-                              id="level"
-                              name="level"
-                              value={formData.level}
+                              id="class"
+                              name="class"
+                              value={formData.class}
                               onChange={handleInputChange}
                               required
                               className="w-full p-3 border border-border rounded-lg bg-background"
                             >
-                              <option value="">Select...</option>
-                              <option value="undergraduate">Undergraduate</option>
-                              <option value="graduate">Graduate</option>
-                              <option value="transfer">Transfer</option>
+                              <option value="">Select Class...</option>
+                              <option value="1">Class 1</option>
+                              <option value="2">Class 2</option>
+                              <option value="3">Class 3</option>
+                              <option value="4">Class 4</option>
+                              <option value="5">Class 5</option>
+                              <option value="6">Class 6</option>
+                              <option value="7">Class 7</option>
+                              <option value="8">Class 8</option>
+                              <option value="9">Class 9</option>
+                              <option value="10">Class 10</option>
+                              <option value="11">Class 11</option>
+                              <option value="12">Class 12</option>
                             </select>
                           </div>
                           <div className="space-y-2">
-                            <Label htmlFor="term">Intended Term *</Label>
-                            <select
-                              id="term"
-                              name="term"
-                              value={formData.term}
+                            <Label htmlFor="rollNumber">Roll Number *</Label>
+                            <Input
+                              id="rollNumber"
+                              name="rollNumber"
+                              placeholder="Enter roll number"
+                              value={formData.rollNumber}
                               onChange={handleInputChange}
                               required
-                              className="w-full p-3 border border-border rounded-lg bg-background"
+                            />
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="aadhaarCard">Aadhaar Card *</Label>
+                            <input
+                              id="aadhaarCard"
+                              name="aadhaarCard"
+                              type="file"
+                              accept="image/*,.pdf"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0] || null;
+                                setFormData(prev => ({ ...prev, aadhaarCard: file }));
+                              }}
+                              required
+                              className="w-full p-3 border border-border rounded-lg bg-background file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-gold file:text-black hover:file:bg-gold/90"
+                            />
+                            <p className="text-sm text-muted-foreground">Upload Aadhaar card (Image or PDF)</p>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <Label htmlFor="birthCertificate">Birth Certificate *</Label>
+                            <input
+                              id="birthCertificate"
+                              name="birthCertificate"
+                              type="file"
+                              accept="image/*,.pdf"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0] || null;
+                                setFormData(prev => ({ ...prev, birthCertificate: file }));
+                              }}
+                              required
+                              className="w-full p-3 border border-border rounded-lg bg-background file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-gold file:text-black hover:file:bg-gold/90"
+                            />
+                            <p className="text-sm text-muted-foreground">Upload birth certificate (Image or PDF)</p>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <Label htmlFor="studentPhoto">Student Photo *</Label>
+                            <input
+                              id="studentPhoto"
+                              name="studentPhoto"
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0] || null;
+                                setFormData(prev => ({ ...prev, studentPhoto: file }));
+                              }}
+                              required
+                              className="w-full p-3 border border-border rounded-lg bg-background file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-gold file:text-black hover:file:bg-gold/90"
+                            />
+                            <p className="text-sm text-muted-foreground">Upload student's passport-size photo (Image only)</p>
+                          </div>
+                        </div>
+
+                        {/* Payment Section */}
+                        <div className="mt-8 pt-6 border-t border-border/50">
+                          <div className="text-center mb-6">
+                            <h3 className="text-2xl font-bold mb-2">Choose Your Plan</h3>
+                            <p className="text-muted-foreground">Select a subscription plan to complete your admission</p>
+                          </div>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            <div 
+                              className={`p-6 border-2 rounded-xl cursor-pointer transition-all ${
+                                subscriptionType === 'monthly' 
+                                  ? 'border-gold bg-gold/5' 
+                                  : 'border-border hover:border-gold/50'
+                              }`}
+                              onClick={() => setSubscriptionType('monthly')}
                             >
-                              <option value="">Select...</option>
-                              <option value="fall2025">Fall 2025</option>
-                              <option value="spring2026">Spring 2026</option>
-                            </select>
+                              <div className="text-center">
+                                <h4 className="text-xl font-bold mb-2">Monthly Plan</h4>
+                                <div className="text-3xl font-bold text-gold mb-2">₹{pricing.monthly.toLocaleString()}</div>
+                                <p className="text-sm text-muted-foreground mb-4">Per month</p>
+                                <ul className="text-sm space-y-2 text-left">
+                                  <li>✓ Full access to all courses</li>
+                                  <li>✓ Monthly assessments</li>
+                                  <li>✓ Teacher support</li>
+                                  <li>✓ Study materials</li>
+                                </ul>
+                              </div>
+                            </div>
+                            
+                            <div 
+                              className={`p-6 border-2 rounded-xl cursor-pointer transition-all ${
+                                subscriptionType === 'yearly' 
+                                  ? 'border-gold bg-gold/5' 
+                                  : 'border-border hover:border-gold/50'
+                              }`}
+                              onClick={() => setSubscriptionType('yearly')}
+                            >
+                              <div className="text-center">
+                                <h4 className="text-xl font-bold mb-2">Yearly Plan</h4>
+                                <div className="text-3xl font-bold text-gold mb-2">₹{pricing.yearly.toLocaleString()}</div>
+                                <p className="text-sm text-muted-foreground mb-2">Per year</p>
+                                <p className="text-xs text-green-600 mb-4">Save ₹{((pricing.monthly * 12) - pricing.yearly).toLocaleString()}!</p>
+                                <ul className="text-sm space-y-2 text-left">
+                                  <li>✓ Everything in Monthly</li>
+                                  <li>✓ Priority support</li>
+                                  <li>✓ Extra study materials</li>
+                                  <li>✓ Annual progress reports</li>
+                                </ul>
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="program">Intended Program/Major *</Label>
-                          <Input
-                            id="program"
-                            name="program"
-                            placeholder="e.g., Computer Science, Business Administration"
-                            value={formData.program}
-                            onChange={handleInputChange}
-                            required
-                          />
-                        </div>
-                      </motion.div>
-                    )}
 
-                    {currentStep === 2 && (
-                      <motion.div
-                        key="step3"
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -20 }}
-                        transition={{ duration: 0.3 }}
-                        className="space-y-6"
-                      >
-                        <div className="space-y-2">
-                          <Label htmlFor="essay">Short Statement</Label>
-                          <Textarea
-                            id="essay"
-                            name="essay"
-                            placeholder="Tell us what excites you about studying here..."
-                            value={formData.essay}
-                            onChange={handleInputChange}
-                            rows={4}
-                          />
-                          <p className="text-sm text-muted-foreground">Optional</p>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="ref1">Recommender Name</Label>
-                            <Input
-                              id="ref1"
-                              name="ref1"
-                              value={formData.ref1}
-                              onChange={handleInputChange}
-                            />
-                            <p className="text-sm text-muted-foreground">Optional</p>
+                          {/* Current Selection Display */}
+                          <div className="text-center p-4 bg-muted/20 rounded-lg border border-border mb-6">
+                            <div className="text-3xl font-bold text-gradient-gold mb-2">₹{getCurrentAmount().toLocaleString()}</div>
+                            <div className="text-sm text-muted-foreground">
+                              {subscriptionType === 'monthly' ? 'Monthly subscription fee' : 'Yearly subscription fee'}
+                            </div>
                           </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="refEmail">Recommender Email</Label>
-                            <Input
-                              id="refEmail"
-                              name="refEmail"
-                              type="email"
-                              value={formData.refEmail}
-                              onChange={handleInputChange}
-                            />
-                            <p className="text-sm text-muted-foreground">Optional</p>
-                          </div>
-                        </div>
-                      </motion.div>
-                    )}
 
-                    {currentStep === 3 && (
-                      <motion.div
-                        key="step4"
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -20 }}
-                        transition={{ duration: 0.3 }}
-                        className="space-y-6"
-                      >
-                        <div className="text-center mb-6">
-                          <h3 className="text-2xl font-heading font-bold mb-2 text-gradient-gold">Subscription Payment</h3>
-                          <p className="text-muted-foreground">Choose your subscription plan and complete payment</p>
-                        </div>
-
-                        {paymentSuccess ? (
-                          <motion.div
-                            initial={{ scale: 0.8, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            className="text-center p-8 bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/30 rounded-xl"
-                          >
-                            <div className="text-6xl mb-4">✅</div>
-                            <h4 className="text-xl font-bold text-green-400 mb-2">Payment Successful!</h4>
-                            <p className="text-muted-foreground">Your {subscriptionType} subscription has been activated successfully.</p>
-                          </motion.div>
-                        ) : (
-                          <div className="space-y-6">
-                            {/* Subscription Type Selection */}
-                            <div className="space-y-3">
-                              <h4 className="font-semibold mb-3">Choose Subscription Plan:</h4>
-                              
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {/* Monthly Plan */}
-                                <motion.button
-                                  type="button"
-                                  whileHover={{ scale: 1.02 }}
-                                  whileTap={{ scale: 0.98 }}
-                                  onClick={() => setSubscriptionType('monthly')}
-                                  className={`p-6 border-2 rounded-xl transition-all duration-300 text-left ${
-                                    subscriptionType === 'monthly' 
-                                      ? 'border-gold bg-gold/10' 
-                                      : 'border-border hover:border-gold/50'
-                                  }`}
-                                >
-                                  <div className="flex items-center justify-between mb-3">
-                                    <div className="text-lg font-bold">Monthly Plan</div>
-                                    <div className={`w-4 h-4 rounded-full border-2 ${
-                                      subscriptionType === 'monthly' ? 'border-gold bg-gold' : 'border-muted-foreground'
-                                    }`} />
+                          {/* Payment Methods */}
+                          <div className="space-y-3">
+                            <h4 className="font-semibold mb-3">Choose Payment Method:</h4>
+                            
+                            {/* Razorpay Option */}
+                            <div
+                              onClick={() => setSelectedPaymentMethod('razorpay')}
+                              className={`p-4 border-2 rounded-xl cursor-pointer transition-all ${
+                                selectedPaymentMethod === 'razorpay' 
+                                  ? 'border-gold bg-gold/5' 
+                                  : 'border-border hover:border-gold/50'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-12 h-8 bg-blue-600 rounded flex items-center justify-center text-white text-xs font-bold">
+                                    Razorpay
                                   </div>
-                                  <div className="text-3xl font-bold text-gradient-gold mb-2">₹1,000</div>
-                                  <div className="text-sm text-muted-foreground">Per month • Flexible billing</div>
-                                  <div className="mt-3 text-xs text-muted-foreground">
-                                    • Cancel anytime
-                                    • Monthly billing cycle
-                                    • Full access to all features
+                                  <div>
+                                    <div className="font-semibold">Razorpay</div>
+                                    <div className="text-sm text-muted-foreground">UPI, Cards, Net Banking</div>
                                   </div>
-                                </motion.button>
-
-                                {/* Yearly Plan */}
-                                <motion.button
-                                  type="button"
-                                  whileHover={{ scale: 1.02 }}
-                                  whileTap={{ scale: 0.98 }}
-                                  onClick={() => setSubscriptionType('yearly')}
-                                  className={`p-6 border-2 rounded-xl transition-all duration-300 text-left relative ${
-                                    subscriptionType === 'yearly' 
-                                      ? 'border-gold bg-gold/10' 
-                                      : 'border-border hover:border-gold/50'
-                                  }`}
-                                >
-                                  <div className="absolute -top-2 -right-2 bg-gradient-to-r from-gold to-crimson text-white text-xs font-bold px-3 py-1 rounded-full">
-                                    SAVE 17%
-                                  </div>
-                                  <div className="flex items-center justify-between mb-3">
-                                    <div className="text-lg font-bold">Yearly Plan</div>
-                                    <div className={`w-4 h-4 rounded-full border-2 ${
-                                      subscriptionType === 'yearly' ? 'border-gold bg-gold' : 'border-muted-foreground'
-                                    }`} />
-                                  </div>
-                                  <div className="text-3xl font-bold text-gradient-gold mb-2">₹12,000</div>
-                                  <div className="text-sm text-muted-foreground">Per year • Best value</div>
-                                  <div className="mt-3 text-xs text-muted-foreground">
-                                    • Save ₹2,000 annually
-                                    • Yearly billing cycle
-                                    • Priority support
-                                  </div>
-                                </motion.button>
+                                </div>
+                                <div className={`w-4 h-4 rounded-full border-2 ${
+                                  selectedPaymentMethod === 'razorpay' ? 'border-gold bg-gold' : 'border-muted-foreground'
+                                }`} />
                               </div>
                             </div>
 
-                            {/* Current Selection Display */}
-                            <div className="text-center p-4 bg-muted/20 rounded-lg border border-border">
-                              <div className="text-3xl font-bold text-gradient-gold mb-2">₹{getCurrentAmount().toLocaleString()}</div>
-                              <div className="text-sm text-muted-foreground">
-                                {subscriptionType === 'monthly' ? 'Monthly subscription fee' : 'Yearly subscription fee'}
+                            {/* PayPal Option */}
+                            <div
+                              onClick={() => setSelectedPaymentMethod('paypal')}
+                              className={`p-4 border-2 rounded-xl cursor-pointer transition-all ${
+                                selectedPaymentMethod === 'paypal' 
+                                  ? 'border-gold bg-gold/5' 
+                                  : 'border-border hover:border-gold/50'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-12 h-8 bg-blue-500 rounded flex items-center justify-center text-white text-xs font-bold">
+                                    PayPal
+                                  </div>
+                                  <div>
+                                    <div className="font-semibold">PayPal</div>
+                                    <div className="text-sm text-muted-foreground">International payments</div>
+                                  </div>
+                                </div>
+                                <div className={`w-4 h-4 rounded-full border-2 ${
+                                  selectedPaymentMethod === 'paypal' ? 'border-gold bg-gold' : 'border-muted-foreground'
+                                }`} />
                               </div>
                             </div>
 
-                            <div className="space-y-3">
-                              <h4 className="font-semibold mb-3">Choose Payment Method:</h4>
-                              
-                              {/* Razorpay Option */}
-                              <motion.button
-                                type="button"
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                                onClick={() => setSelectedPaymentMethod('razorpay')}
-                                className={`w-full p-4 border-2 rounded-xl transition-all duration-300 ${
-                                  selectedPaymentMethod === 'razorpay' 
-                                    ? 'border-gold bg-gold/10' 
-                                    : 'border-border hover:border-gold/50'
-                                }`}
-                              >
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center space-x-3">
-                                    <div className="w-12 h-8 bg-white rounded-lg flex items-center justify-center border border-border overflow-hidden">
-                                      <svg viewBox="0 0 100 40" className="w-full h-full">
-                                        <rect width="100" height="40" fill="#3395FF"/>
-                                        <text x="50" y="25" textAnchor="middle" fill="white" fontSize="12" fontWeight="bold">Razorpay</text>
-                                      </svg>
-                                    </div>
-                                    <div className="text-left">
-                                      <div className="font-semibold">Razorpay</div>
-                                      <div className="text-sm text-muted-foreground">UPI, Cards, Net Banking</div>
-                                    </div>
+                            {/* Stripe Option */}
+                            <div
+                              onClick={() => setSelectedPaymentMethod('stripe')}
+                              className={`p-4 border-2 rounded-xl cursor-pointer transition-all ${
+                                selectedPaymentMethod === 'stripe' 
+                                  ? 'border-gold bg-gold/5' 
+                                  : 'border-border hover:border-gold/50'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-12 h-8 bg-purple-600 rounded flex items-center justify-center text-white text-xs font-bold">
+                                    Stripe
                                   </div>
-                                  <div className={`w-4 h-4 rounded-full border-2 ${
-                                    selectedPaymentMethod === 'razorpay' ? 'border-gold bg-gold' : 'border-muted-foreground'
-                                  }`} />
-                                </div>
-                              </motion.button>
-
-                              {/* PayPal Option */}
-                              <motion.button
-                                type="button"
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                                onClick={() => setSelectedPaymentMethod('paypal')}
-                                className={`w-full p-4 border-2 rounded-xl transition-all duration-300 ${
-                                  selectedPaymentMethod === 'paypal' 
-                                    ? 'border-gold bg-gold/10' 
-                                    : 'border-border hover:border-gold/50'
-                                }`}
-                              >
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center space-x-3">
-                                    <div className="w-12 h-8 bg-white rounded-lg flex items-center justify-center border border-border overflow-hidden">
-                                      <svg viewBox="0 0 100 40" className="w-full h-full">
-                                        <rect width="100" height="40" fill="#0070BA"/>
-                                        <text x="50" y="25" textAnchor="middle" fill="white" fontSize="12" fontWeight="bold">PayPal</text>
-                                      </svg>
-                                    </div>
-                                    <div className="text-left">
-                                      <div className="font-semibold">PayPal</div>
-                                      <div className="text-sm text-muted-foreground">International payments</div>
-                                    </div>
+                                  <div>
+                                    <div className="font-semibold">Stripe</div>
+                                    <div className="text-sm text-muted-foreground">Credit/Debit Cards</div>
                                   </div>
-                                  <div className={`w-4 h-4 rounded-full border-2 ${
-                                    selectedPaymentMethod === 'paypal' ? 'border-gold bg-gold' : 'border-muted-foreground'
-                                  }`} />
                                 </div>
-                              </motion.button>
-
-                              {/* Stripe Option */}
-                              <motion.button
-                                type="button"
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                                onClick={() => setSelectedPaymentMethod('stripe')}
-                                className={`w-full p-4 border-2 rounded-xl transition-all duration-300 ${
-                                  selectedPaymentMethod === 'stripe' 
-                                    ? 'border-gold bg-gold/10' 
-                                    : 'border-border hover:border-gold/50'
-                                }`}
-                              >
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center space-x-3">
-                                    <div className="w-12 h-8 bg-white rounded-lg flex items-center justify-center border border-border overflow-hidden">
-                                      <svg viewBox="0 0 100 40" className="w-full h-full">
-                                        <rect width="100" height="40" fill="#635BFF"/>
-                                        <text x="50" y="25" textAnchor="middle" fill="white" fontSize="12" fontWeight="bold">Stripe</text>
-                                      </svg>
-                                    </div>
-                                    <div className="text-left">
-                                      <div className="font-semibold">Stripe</div>
-                                      <div className="text-sm text-muted-foreground">Credit/Debit Cards</div>
-                                    </div>
-                                  </div>
-                                  <div className={`w-4 h-4 rounded-full border-2 ${
-                                    selectedPaymentMethod === 'stripe' ? 'border-gold bg-gold' : 'border-muted-foreground'
-                                  }`} />
-                                </div>
-                              </motion.button>
+                                <div className={`w-4 h-4 rounded-full border-2 ${
+                                  selectedPaymentMethod === 'stripe' ? 'border-gold bg-gold' : 'border-muted-foreground'
+                                }`} />
+                              </div>
                             </div>
 
-                            <div className="text-xs text-muted-foreground text-center mt-4 p-3 bg-muted/10 rounded-lg">
-                              🔒 Your payment information is secure and encrypted. We do not store your payment details.
-                            </div>
+                          {/* Payment Buttons */}
+                          <div className="mt-6 flex gap-3">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={handleTestSubmission}
+                              disabled={paymentProcessing}
+                              className="flex-1"
+                            >
+                              Submit without Payment (Test)
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="default"
+                              onClick={handlePayment}
+                              disabled={!selectedPaymentMethod || paymentProcessing}
+                              className="flex-1 bg-gold hover:bg-gold/90 text-black"
+                            >
+                              {paymentProcessing ? 'Processing...' : 'Pay & Submit'}
+                            </Button>
                           </div>
-                        )}
+                          </div>
+                        </div>
                       </motion.div>
                     )}
                   </AnimatePresence>
 
-                  {/* Modal Footer */}
+                  {/* Simple Navigation */}
                   <div className="flex justify-between items-center mt-8 pt-6 border-t border-border">
                     <Button
                       type="button"
@@ -1390,7 +1566,7 @@ const Admissions = () => {
                       Back
                     </Button>
                     
-                    {currentStep < 3 ? (
+                    {currentStep < 1 && (
                       <Button
                         type="button"
                         variant="gold"
@@ -1398,61 +1574,6 @@ const Admissions = () => {
                       >
                         Next
                       </Button>
-                    ) : (
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={handleTestSubmission}
-                          disabled={paymentProcessing || paymentSuccess}
-                        >
-                          Submit without Payment (Test)
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          onClick={() => {
-                            console.log('Force test save clicked');
-                            const testData = {
-                              firstName: 'Test',
-                              lastName: 'User',
-                              email: 'test@example.com',
-                              phone: '1234567890',
-                              citizenship: 'domestic',
-                              level: 'undergraduate',
-                              term: 'fall2025',
-                              program: 'Computer Science',
-                              essay: 'Test essay',
-                              ref1: '',
-                              refEmail: ''
-                            };
-                            setFormData(testData);
-                            setTimeout(() => {
-                              saveAdmission('test', null);
-                            }, 100);
-                          }}
-                          className="text-xs"
-                        >
-                          Force Test Save
-                        </Button>
-                        <Button 
-                          type="submit" 
-                          variant="gold"
-                          disabled={!selectedPaymentMethod || paymentProcessing || paymentSuccess}
-                          className="min-w-[120px]"
-                        >
-                          {paymentProcessing ? (
-                            <div className="flex items-center space-x-2">
-                              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                              <span>Processing...</span>
-                            </div>
-                          ) : paymentSuccess ? (
-                            'Complete'
-                          ) : (
-                            'Pay & Submit'
-                          )}
-                        </Button>
-                      </div>
                     )}
                   </div>
                   </form>

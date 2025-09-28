@@ -18,7 +18,10 @@ import {
   X,
   Trophy,
   UserPlus,
-  IdCard
+  IdCard,
+  DollarSign,
+  Clock,
+  GraduationCap
 } from "lucide-react";
 import { Button } from "@/components/ui/button-variants";
 import { Input } from "@/components/ui/input";
@@ -29,6 +32,7 @@ import GalleryManagerSimple from "@/components/GalleryManagerSimple";
 import AboutPageManager from "@/components/AboutPageManager";
 import CourseManager from "@/components/CourseManager";
 import TopScorersManager from "@/components/TopScorersManager";
+import AdmissionsPageManager from "@/components/AdmissionsPageManager";
 
 // Admission record type for localStorage sync with Admissions page
 interface AdmissionRecord {
@@ -48,6 +52,12 @@ interface AdmissionRecord {
   essay: string;
   ref1: string;
   refEmail: string;
+  // Additional properties for student records
+  class?: string;
+  rollNumber?: string;
+  studentPhoto?: string | null;
+  aadhaarCard?: string | null;
+  birthCertificate?: string | null;
 }
 
 // Teacher record used for Principal teacher management
@@ -69,7 +79,7 @@ interface TeacherRecord {
 
 const PrincipalDashboard = () => {
   const [principalEmail, setPrincipalEmail] = useState("");
-  const [activeSection, setActiveSection] = useState<"dashboard" | "teachers" | "homepage" | "courses" | "gallery" | "about" | "announcements" | "admissions" | "topscorers" | "createteacherid" | "manageteachers">("dashboard");
+  const [activeSection, setActiveSection] = useState<"dashboard" | "teachers" | "homepage" | "courses" | "gallery" | "about" | "announcements" | "admissions" | "topscorers" | "createteacherid" | "manageteachers" | "manageteacherid" | "pricemanagement" | "timetable" | "admissionsmanager">("dashboard");
   
   // Teacher creation form state
   const [teacherForm, setTeacherForm] = useState({
@@ -80,13 +90,31 @@ const PrincipalDashboard = () => {
     phone: "",
     assignedClass: "",
     assignedSection: "",
+    password: "",
     sendCredentials: false
   });
+  
   const [admissions, setAdmissions] = useState<AdmissionRecord[]>([]);
   const [admissionsSearch, setAdmissionsSearch] = useState("");
+  
+  // Timetable management state
+  const [selectedTimetableClass, setSelectedTimetableClass] = useState("1");
+  const [selectedTimetableSection, setSelectedTimetableSection] = useState("A");
+  const [currentTimetable, setCurrentTimetable] = useState<any[]>([]);
+  const [editingPeriod, setEditingPeriod] = useState<any>(null);
+  const [showPeriodModal, setShowPeriodModal] = useState(false);
+  
+  const navigate = useNavigate();
   // Teachers state (for Manage Teachers section)
   const [teachers, setTeachers] = useState<TeacherRecord[]>([]);
   const [teacherSearch, setTeacherSearch] = useState("");
+  // Price management state
+  const [pricing, setPricing] = useState({
+    monthly: 5000,
+    yearly: 50000
+  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [teacherSubjectFilter, setTeacherSubjectFilter] = useState("");
   const [teacherStatusFilter, setTeacherStatusFilter] = useState("");
   const [editTeacher, setEditTeacher] = useState<TeacherRecord | null>(null);
@@ -124,7 +152,6 @@ const PrincipalDashboard = () => {
       unread: false
     }
   ]);
-  const navigate = useNavigate();
 
   // Handle teacher account creation
   const handleCreateTeacher = async () => {
@@ -151,6 +178,20 @@ const PrincipalDashboard = () => {
         joinDate: new Date().toISOString().split('T')[0],
         createdAt: new Date().toISOString()
       };
+      const existingTeachers: TeacherRecord[] = JSON.parse(localStorage.getItem('royal-academy-teachers') || '[]');
+      localStorage.setItem('royal-academy-teachers', JSON.stringify([...existingTeachers, newTeacher]));
+      const existingAuthTeachers = JSON.parse(localStorage.getItem('royal-academy-auth-teachers') || '[]');
+      const authTeacher = { ...newTeacher, username: teacherForm.fullName, teacherId, type: 'teacher' } as any;
+      localStorage.setItem('royal-academy-auth-teachers', JSON.stringify([...existingAuthTeachers, authTeacher]));
+      alert(`Teacher account created successfully!\n\nLogin Credentials:\nEmail: ${teacherForm.email}\nPassword: ${defaultPassword}\nTeacher ID: ${teacherId}`);
+      setTeachers(prev => [...prev, newTeacher]);
+      setActiveSection('manageteachers');
+      setTeacherForm({ fullName: "", email: "", subject: "", employeeId: "", phone: "", assignedClass: "", assignedSection: "", password: "", sendCredentials: false });
+    } catch (error) {
+      alert("Failed to create teacher account. Please try again.");
+      console.error("Error creating teacher:", error);
+    }
+  };
 
   // Save edited teacher (updates both teachers and auth lists)
   const handleSaveTeacherEdit = () => {
@@ -170,20 +211,6 @@ const PrincipalDashboard = () => {
       return updated;
     });
     setEditTeacher(null);
-  };
-      const existingTeachers: TeacherRecord[] = JSON.parse(localStorage.getItem('royal-academy-teachers') || '[]');
-      localStorage.setItem('royal-academy-teachers', JSON.stringify([...existingTeachers, newTeacher]));
-      const existingAuthTeachers = JSON.parse(localStorage.getItem('royal-academy-auth-teachers') || '[]');
-      const authTeacher = { ...newTeacher, username: teacherForm.fullName, teacherId, type: 'teacher' } as any;
-      localStorage.setItem('royal-academy-auth-teachers', JSON.stringify([...existingAuthTeachers, authTeacher]));
-      alert(`Teacher account created successfully!\n\nLogin Credentials:\nEmail: ${teacherForm.email}\nPassword: ${defaultPassword}\nTeacher ID: ${teacherId}`);
-      setTeachers(prev => [...prev, newTeacher]);
-      setActiveSection('manageteachers');
-      setTeacherForm({ fullName: "", email: "", subject: "", employeeId: "", phone: "", assignedClass: "", assignedSection: "", sendCredentials: false });
-    } catch (error) {
-      alert("Failed to create teacher account. Please try again.");
-      console.error("Error creating teacher:", error);
-    }
   };
 
   // Load teachers from localStorage
@@ -275,14 +302,33 @@ const PrincipalDashboard = () => {
   };
 
   useEffect(() => {
-    loadAdmissions();
-    loadTeachers();
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === 'royal-academy-admissions') {
-        loadAdmissions();
+    try {
+      loadAdmissions();
+      loadTeachers();
+      
+      // Load pricing from localStorage
+      const savedPricing = localStorage.getItem('royal-academy-pricing');
+      if (savedPricing) {
+        setPricing(JSON.parse(savedPricing));
       }
-      if (e.key === 'royal-academy-teachers') {
-        loadTeachers();
+      
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Error initializing dashboard:', error);
+      setError('Failed to load dashboard data');
+      setIsLoading(false);
+    }
+    
+    const onStorage = (e: StorageEvent) => {
+      try {
+        if (e.key === 'royal-academy-admissions') {
+          loadAdmissions();
+        }
+        if (e.key === 'royal-academy-teachers') {
+          loadTeachers();
+        }
+      } catch (error) {
+        console.error('Error handling storage event:', error);
       }
     };
     window.addEventListener('storage', onStorage);
@@ -339,6 +385,8 @@ const PrincipalDashboard = () => {
     { icon: Calendar, label: "Schedule Event", color: "from-purple-500 to-purple-600", action: () => {} },
     { icon: FileText, label: "Generate Report", color: "from-orange-500 to-orange-600", action: () => {} },
     { icon: Bell, label: "Send Announcement", color: "from-red-500 to-red-600", action: () => setActiveSection("announcements") },
+    { icon: Clock, label: "Manage Timetable", color: "from-indigo-500 to-indigo-600", action: () => setActiveSection("timetable") },
+    { icon: GraduationCap, label: "Edit Admissions Page", color: "from-purple-500 to-purple-600", action: () => setActiveSection("admissionsmanager") },
     { icon: Settings, label: "System Settings", color: "from-gray-500 to-gray-600", action: () => {} }
   ];
 
@@ -351,7 +399,7 @@ const PrincipalDashboard = () => {
 
   // Precompute filtered teachers list for Manage Teachers
   const filteredTeachers = teachers
-    .filter(t => (teacherSubjectFilter ? (t.subject || '').toLowerCase() === teacherSubjectFilter : true))
+    .filter(t => (teacherSubjectFilter ? (t.subject || '').toLowerCase() === teacherSubjectFilter.toLowerCase() : true))
     .filter(t => (teacherStatusFilter ? t.status === (teacherStatusFilter as 'active' | 'banned') : true))
     .filter(t => {
       const q = teacherSearch.trim().toLowerCase();
@@ -362,6 +410,29 @@ const PrincipalDashboard = () => {
         (t.subject || '').toLowerCase().includes(q)
       );
     });
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading Principal Dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-500 mb-4">⚠️ Error</div>
+          <p className="text-muted-foreground mb-4">{error}</p>
+          <Button onClick={() => window.location.reload()}>Reload Page</Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
@@ -641,14 +712,16 @@ const PrincipalDashboard = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-3 sm:gap-4">
               {[
                 { title: "Edit Homepage", desc: "Update main page content", icon: Edit, action: () => setActiveSection("homepage") },
-                { title: "Manage Teachers", desc: "Add/edit teacher profiles", icon: Users, action: () => setActiveSection("manageteachers") },
+                { title: "Manage Teachers", desc: "Add/edit teacher profiles", icon: Users, action: () => setActiveSection("teachers") },
                 { title: "Send Announcements", desc: "Create and manage announcements", icon: Bell, action: () => setActiveSection("announcements") },
                 { title: "Manage Courses", desc: "Add/edit academic programs", icon: BookOpen, action: () => setActiveSection("courses") },
                 { title: "Update Gallery", desc: "Manage photo galleries", icon: Eye, action: () => setActiveSection("gallery") },
                 { title: "Edit About Page", desc: "Update school information", icon: FileText, action: () => setActiveSection("about") },
                 { title: "View Admissions", desc: "Review submitted applications", icon: FileText, action: () => setActiveSection("admissions") },
                 { title: "Manage Top Scorers", desc: "Edit students, rankings, and categories", icon: Trophy, action: () => setActiveSection("topscorers") },
-                { title: "Create New Teacher ID", desc: "Generate teacher login credentials", icon: UserPlus, action: () => setActiveSection("createteacherid") }
+                { title: "Create New Teacher ID", desc: "Generate teacher login credentials", icon: UserPlus, action: () => setActiveSection("createteacherid") },
+                { title: "Manage Teacher IDs", desc: "View and manage teacher login credentials", icon: IdCard, action: () => setActiveSection("manageteacherid") },
+                { title: "Price Management", desc: "Update admission fees and pricing", icon: DollarSign, action: () => setActiveSection("pricemanagement") }
               ].map((item, index) => (
                 <motion.div
                   key={item.title}
@@ -808,7 +881,7 @@ const PrincipalDashboard = () => {
             <div className="bg-card/95 backdrop-blur-md rounded-xl p-6 border border-border/50">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-lg font-heading font-bold text-foreground">
-                  About Page Management
+                  Update School Information
                 </h2>
                 <Button
                   variant="outline"
@@ -856,11 +929,12 @@ const PrincipalDashboard = () => {
                 <table className="min-w-full text-sm">
                   <thead>
                     <tr className="text-left border-b border-border/50">
-                      <th className="py-3 pr-4">Applicant</th>
-                      <th className="py-3 pr-4">Email</th>
-                      <th className="py-3 pr-4">Program</th>
-                      <th className="py-3 pr-4">Level / Term</th>
+                      <th className="py-3 pr-4">Student</th>
+                      <th className="py-3 pr-4">Contact</th>
+                      <th className="py-3 pr-4">Class/Roll</th>
+                      <th className="py-3 pr-4">Plan</th>
                       <th className="py-3 pr-4">Payment</th>
+                      <th className="py-3 pr-4">Documents</th>
                       <th className="py-3 pr-4">Submitted</th>
                     </tr>
                   </thead>
@@ -878,23 +952,125 @@ const PrincipalDashboard = () => {
                       })
                       .map((a) => (
                         <tr key={a.id} className="border-b border-border/30 hover:bg-muted/20">
-                          <td className="py-3 pr-4 font-medium text-foreground">{a.firstName} {a.lastName}</td>
-                          <td className="py-3 pr-4 text-muted-foreground">{a.email}</td>
-                          <td className="py-3 pr-4 text-muted-foreground">{a.program}</td>
-                          <td className="py-3 pr-4 text-muted-foreground">{a.level} • {a.term}</td>
+                          <td className="py-3 pr-4">
+                            <div>
+                              <div className="font-medium text-foreground">{a.firstName} {a.lastName}</div>
+                              {a.studentPhoto && typeof a.studentPhoto === 'object' && (
+                                <img 
+                                  src={URL.createObjectURL(a.studentPhoto)} 
+                                  alt="Student" 
+                                  className="w-8 h-8 rounded-full mt-1 object-cover border"
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                  }}
+                                />
+                              )}
+                            </div>
+                          </td>
+                          <td className="py-3 pr-4">
+                            <div className="text-muted-foreground">
+                              <div>{a.email}</div>
+                              {a.phone && <div className="text-xs">{a.phone}</div>}
+                            </div>
+                          </td>
+                          <td className="py-3 pr-4 text-muted-foreground">
+                            <div>Class {a.class || 'N/A'}</div>
+                            <div className="text-xs">Roll: {a.rollNumber || 'N/A'}</div>
+                          </td>
+                          <td className="py-3 pr-4">
+                            <span className={`px-2 py-1 text-xs rounded-full ${
+                              a.subscriptionType === 'yearly' 
+                                ? 'bg-gold/10 text-gold border border-gold/30' 
+                                : 'bg-blue-500/10 text-blue-400 border border-blue-500/30'
+                            }`}>
+                              {a.subscriptionType === 'yearly' ? 'Yearly' : 'Monthly'}
+                            </span>
+                          </td>
                           <td className="py-3 pr-4">
                             {a.paymentStatus === 'paid' ? (
-                              <span className="px-2 py-1 text-xs rounded-full bg-green-500/10 text-green-400 border border-green-500/30">Paid{a.paymentMethod && a.paymentMethod !== 'test' ? ` (${a.paymentMethod})` : ''}</span>
+                              <span className="px-2 py-1 text-xs rounded-full bg-green-500/10 text-green-400 border border-green-500/30">
+                                Paid{a.paymentMethod && a.paymentMethod !== 'test' ? ` (${a.paymentMethod})` : ''}
+                              </span>
                             ) : (
                               <span className="px-2 py-1 text-xs rounded-full bg-yellow-500/10 text-yellow-400 border border-yellow-500/30">Test</span>
                             )}
                           </td>
-                          <td className="py-3 pr-4 text-muted-foreground">{new Date(a.createdAt).toLocaleString()}</td>
+                          <td className="py-3 pr-4">
+                            <div className="flex gap-1">
+                              {a.aadhaarCard && typeof a.aadhaarCard === 'object' && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    try {
+                                      if (a.aadhaarCard && (a.aadhaarCard as any instanceof File || a.aadhaarCard as any instanceof Blob)) {
+                                        const url = URL.createObjectURL(a.aadhaarCard as unknown as Blob);
+                                        window.open(url, '_blank');
+                                      } else if (typeof a.aadhaarCard === 'string') {
+                                        window.open(a.aadhaarCard, '_blank');
+                                      }
+                                    } catch (error) {
+                                      console.error('Error opening Aadhaar card:', error);
+                                    }
+                                  }}
+                                  title="View Aadhaar Card"
+                                  className="h-6 px-2 text-xs"
+                                >
+                                  Aadhaar
+                                </Button>
+                              )}
+                              {a.birthCertificate && typeof a.birthCertificate === 'object' && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    try {
+                                      if (a.birthCertificate && (a.birthCertificate as any instanceof File || a.birthCertificate as any instanceof Blob)) {
+                                        const url = URL.createObjectURL(a.birthCertificate as unknown as Blob);
+                                        window.open(url, '_blank');
+                                      } else if (typeof a.birthCertificate === 'string') {
+                                        window.open(a.birthCertificate, '_blank');
+                                      }
+                                    } catch (error) {
+                                      console.error('Error opening birth certificate:', error);
+                                    }
+                                  }}
+                                  title="View Birth Certificate"
+                                  className="h-6 px-2 text-xs"
+                                >
+                                  Birth Cert
+                                </Button>
+                              )}
+                              {a.studentPhoto && typeof a.studentPhoto === 'object' && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    try {
+                                      if (a.studentPhoto && (a.studentPhoto as any instanceof File || a.studentPhoto as any instanceof Blob)) {
+                                        const url = URL.createObjectURL(a.studentPhoto as unknown as Blob);
+                                        window.open(url, '_blank');
+                                      } else if (typeof a.studentPhoto === 'string') {
+                                        window.open(a.studentPhoto, '_blank');
+                                      }
+                                    } catch (error) {
+                                      console.error('Error opening student photo:', error);
+                                    }
+                                  }}
+                                  title="View Student Photo"
+                                  className="h-6 px-2 text-xs"
+                                >
+                                  Photo
+                                </Button>
+                              )}
+                            </div>
+                          </td>
+                          <td className="py-3 pr-4 text-muted-foreground text-xs">{new Date(a.createdAt).toLocaleString()}</td>
                         </tr>
                       ))}
                     {admissions.length === 0 && (
                       <tr>
-                        <td className="py-6 text-center text-muted-foreground" colSpan={6}>No admissions yet.</td>
+                        <td className="py-6 text-center text-muted-foreground" colSpan={7}>No admissions yet.</td>
                       </tr>
                     )}
                   </tbody>
@@ -1017,19 +1193,7 @@ const PrincipalDashboard = () => {
 
                 {/* Teachers List */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {teachers
-                    .filter(t => (teacherSubjectFilter ? (t.subject || '').toLowerCase() === teacherSubjectFilter : true))
-                    .filter(t => (teacherStatusFilter ? t.status === (teacherStatusFilter as 'active' | 'banned') : true))
-                    .filter(t => {
-                      const q = teacherSearch.trim().toLowerCase();
-                      if (!q) return true;
-                      return (
-                        (t.name || '').toLowerCase().includes(q) ||
-                        (t.email || '').toLowerCase().includes(q) ||
-                        (t.subject || '').toLowerCase().includes(q)
-                      );
-                    })
-                    .map((teacher) => (
+                  {filteredTeachers.map((teacher) => (
                     <motion.div
                       key={teacher.id}
                       initial={{ opacity: 0, scale: 0.9 }}
@@ -1167,7 +1331,7 @@ const PrincipalDashboard = () => {
               </div>
               <div className="flex items-center justify-end gap-2 p-4 border-t border-border">
                 <Button variant="outline" onClick={() => setEditTeacher(null)}>Cancel</Button>
-                <Button onClick={() => setEditTeacher(null)} className="bg-gradient-to-r from-gold to-yellow-500 text-black">Save Changes</Button>
+                <Button onClick={handleSaveTeacherEdit} className="bg-gradient-to-r from-gold to-yellow-500 text-black">Save Changes</Button>
               </div>
             </div>
           </div>
@@ -1415,7 +1579,11 @@ const PrincipalDashboard = () => {
                       Quick Actions
                     </h3>
                     <div className="space-y-2">
-                      <Button variant="outline" className="w-full justify-start">
+                      <Button 
+                        variant="outline" 
+                        className="w-full justify-start"
+                        onClick={() => navigate('/manage-teachers')}
+                      >
                         <Users className="h-4 w-4 mr-2" />
                         View All Teachers
                       </Button>
@@ -1434,6 +1602,814 @@ const PrincipalDashboard = () => {
             </div>
           </motion.div>
         )}
+        {activeSection === "manageteacherid" && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="mt-8"
+          >
+            <div className="bg-card/95 backdrop-blur-md rounded-xl p-6 border border-border/50">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-lg font-heading font-bold text-foreground">
+                    Manage Teacher IDs
+                  </h2>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    View and manage teacher login credentials and access control
+                  </p>
+                </div>
+                <Button
+                  onClick={() => setActiveSection("dashboard")}
+                  variant="outline"
+                  size="sm"
+                >
+                  Back to Dashboard
+                </Button>
+              </div>
+
+              {/* Redirect to Manage Teacher ID page */}
+              <div className="text-center py-8">
+                <IdCard className="h-16 w-16 mx-auto mb-4 text-gold" />
+                <h3 className="text-xl font-bold mb-2">Teacher ID Management</h3>
+                <p className="text-muted-foreground mb-6">
+                  Access the comprehensive teacher ID management system to view, edit, and control teacher login credentials.
+                </p>
+                <div className="flex gap-4 justify-center">
+                  <Button
+                    onClick={() => window.open('/manage-teacher-id', '_blank')}
+                    className="bg-gradient-to-r from-gold to-yellow-500 text-black hover:from-gold/90 hover:to-yellow-500/90"
+                  >
+                    <IdCard className="h-4 w-4 mr-2" />
+                    Open Teacher ID Manager
+                  </Button>
+                  <Button
+                    onClick={() => setActiveSection("createteacherid")}
+                    variant="outline"
+                  >
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    Create New Teacher ID
+                  </Button>
+                </div>
+              </div>
+
+              {/* Quick Stats */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-8">
+                <div className="bg-muted/20 rounded-lg p-4 text-center">
+                  <div className="text-2xl font-bold text-primary">
+                    {(() => {
+                      try {
+                        const authTeachers = JSON.parse(localStorage.getItem('royal-academy-auth-teachers') || '[]');
+                        return authTeachers.length;
+                      } catch {
+                        return 0;
+                      }
+                    })()}
+                  </div>
+                  <div className="text-sm text-muted-foreground">Total Teacher IDs</div>
+                </div>
+                <div className="bg-muted/20 rounded-lg p-4 text-center">
+                  <div className="text-2xl font-bold text-green-600">
+                    {(() => {
+                      try {
+                        const authTeachers = JSON.parse(localStorage.getItem('royal-academy-auth-teachers') || '[]');
+                        return authTeachers.filter((t: any) => t.status === 'active' || !t.status).length;
+                      } catch {
+                        return 0;
+                      }
+                    })()}
+                  </div>
+                  <div className="text-sm text-muted-foreground">Active IDs</div>
+                </div>
+                <div className="bg-muted/20 rounded-lg p-4 text-center">
+                  <div className="text-2xl font-bold text-red-600">
+                    {(() => {
+                      try {
+                        const authTeachers = JSON.parse(localStorage.getItem('royal-academy-auth-teachers') || '[]');
+                        return authTeachers.filter((t: any) => t.status === 'banned').length;
+                      } catch {
+                        return 0;
+                      }
+                    })()}
+                  </div>
+                  <div className="text-sm text-muted-foreground">Banned IDs</div>
+                </div>
+                <div className="bg-muted/20 rounded-lg p-4 text-center">
+                  <div className="text-2xl font-bold text-yellow-600">
+                    {(() => {
+                      try {
+                        const authTeachers = JSON.parse(localStorage.getItem('royal-academy-auth-teachers') || '[]');
+                        return authTeachers.filter((t: any) => (t.loginAttempts || 0) > 3).length;
+                      } catch {
+                        return 0;
+                      }
+                    })()}
+                  </div>
+                  <div className="text-sm text-muted-foreground">Login Issues</div>
+                </div>
+              </div>
+
+              {/* Quick Actions */}
+              <div className="mt-6 p-4 bg-muted/10 rounded-lg">
+                <h4 className="font-semibold mb-3">Quick Actions</h4>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => window.open('/manage-teacher-id', '_blank')}
+                  >
+                    View All Teacher IDs
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setActiveSection("createteacherid")}
+                  >
+                    Create New ID
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setActiveSection("manageteachers")}
+                  >
+                    Manage Teachers
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {activeSection === "pricemanagement" && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="mt-8"
+          >
+            <div className="bg-card/95 backdrop-blur-md rounded-xl p-6 border border-border/50">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-lg font-heading font-bold text-foreground">
+                    Price Management
+                  </h2>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Update admission fees and subscription pricing
+                  </p>
+                </div>
+                <Button
+                  onClick={() => setActiveSection("dashboard")}
+                  variant="outline"
+                  size="sm"
+                >
+                  Back to Dashboard
+                </Button>
+              </div>
+
+              <div className="grid gap-6 md:grid-cols-2">
+                {/* Monthly Plan */}
+                <div className="p-6 border border-border/50 rounded-xl">
+                  <div className="text-center mb-4">
+                    <h3 className="text-xl font-bold mb-2">Monthly Plan</h3>
+                    <div className="text-3xl font-bold text-gold mb-2">₹{pricing.monthly.toLocaleString()}</div>
+                    <p className="text-sm text-muted-foreground">Per month</p>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <label className="text-sm font-medium">Monthly Price (₹)</label>
+                    <Input
+                      type="number"
+                      value={pricing.monthly}
+                      onChange={(e) => setPricing(prev => ({ ...prev, monthly: parseInt(e.target.value) || 0 }))}
+                      min="0"
+                      step="100"
+                    />
+                    <Button
+                      onClick={() => {
+                        localStorage.setItem('royal-academy-pricing', JSON.stringify(pricing));
+                        alert('Monthly pricing updated successfully!');
+                      }}
+                      className="w-full"
+                    >
+                      Update Monthly Price
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Yearly Plan */}
+                <div className="p-6 border border-border/50 rounded-xl">
+                  <div className="text-center mb-4">
+                    <h3 className="text-xl font-bold mb-2">Yearly Plan</h3>
+                    <div className="text-3xl font-bold text-gold mb-2">₹{pricing.yearly.toLocaleString()}</div>
+                    <p className="text-sm text-muted-foreground">Per year</p>
+                    <p className="text-xs text-green-600">
+                      Save ₹{((pricing.monthly * 12) - pricing.yearly).toLocaleString()}!
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <label className="text-sm font-medium">Yearly Price (₹)</label>
+                    <Input
+                      type="number"
+                      value={pricing.yearly}
+                      onChange={(e) => setPricing(prev => ({ ...prev, yearly: parseInt(e.target.value) || 0 }))}
+                      min="0"
+                      step="1000"
+                    />
+                    <Button
+                      onClick={() => {
+                        localStorage.setItem('royal-academy-pricing', JSON.stringify(pricing));
+                        alert('Yearly pricing updated successfully!');
+                      }}
+                      className="w-full"
+                    >
+                      Update Yearly Price
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bulk Update */}
+              <div className="mt-6 p-4 bg-muted/10 rounded-lg">
+                <h4 className="font-semibold mb-3">Quick Actions</h4>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      localStorage.setItem('royal-academy-pricing', JSON.stringify(pricing));
+                      alert('All pricing updated successfully!');
+                    }}
+                  >
+                    Save All Changes
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      const saved = localStorage.getItem('royal-academy-pricing');
+                      if (saved) {
+                        setPricing(JSON.parse(saved));
+                        alert('Pricing loaded from saved settings!');
+                      }
+                    }}
+                  >
+                    Load Saved Pricing
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setPricing({ monthly: 5000, yearly: 50000 });
+                      alert('Pricing reset to defaults!');
+                    }}
+                  >
+                    Reset to Default
+                  </Button>
+                </div>
+              </div>
+
+              {/* Current Statistics */}
+              <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-muted/20 rounded-lg p-4 text-center">
+                  <div className="text-2xl font-bold text-primary">
+                    {admissions.filter(a => a.subscriptionType === 'monthly').length}
+                  </div>
+                  <div className="text-sm text-muted-foreground">Monthly Subscribers</div>
+                </div>
+                <div className="bg-muted/20 rounded-lg p-4 text-center">
+                  <div className="text-2xl font-bold text-green-600">
+                    {admissions.filter(a => a.subscriptionType === 'yearly').length}
+                  </div>
+                  <div className="text-sm text-muted-foreground">Yearly Subscribers</div>
+                </div>
+                <div className="bg-muted/20 rounded-lg p-4 text-center">
+                  <div className="text-2xl font-bold text-gold">
+                    ₹{(
+                      admissions.filter(a => a.subscriptionType === 'monthly').length * pricing.monthly +
+                      admissions.filter(a => a.subscriptionType === 'yearly').length * pricing.yearly
+                    ).toLocaleString()}
+                  </div>
+                  <div className="text-sm text-muted-foreground">Total Revenue</div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Timetable Management Section */}
+        {activeSection === "timetable" && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-6"
+          >
+            <div className="bg-card/95 backdrop-blur-md rounded-xl p-6 border border-border/50">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-2xl font-heading font-bold text-foreground">Timetable Management</h2>
+                  <p className="text-sm text-muted-foreground">Create and manage class timetables for different sections</p>
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={() => setActiveSection("dashboard")}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+
+              {/* Class and Section Selection */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Select Class</label>
+                  <select
+                    value={selectedTimetableClass}
+                    onChange={(e) => setSelectedTimetableClass(e.target.value)}
+                    className="w-full p-3 border border-border rounded-lg bg-background"
+                  >
+                    <option value="1">Class 1</option>
+                    <option value="2">Class 2</option>
+                    <option value="3">Class 3</option>
+                    <option value="4">Class 4</option>
+                    <option value="5">Class 5</option>
+                    <option value="6">Class 6</option>
+                    <option value="7">Class 7</option>
+                    <option value="8">Class 8</option>
+                    <option value="9">Class 9</option>
+                    <option value="10">Class 10</option>
+                    <option value="11">Class 11</option>
+                    <option value="12">Class 12</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Select Section</label>
+                  <select
+                    value={selectedTimetableSection}
+                    onChange={(e) => setSelectedTimetableSection(e.target.value)}
+                    className="w-full p-3 border border-border rounded-lg bg-background"
+                  >
+                    <option value="A">Section A</option>
+                    <option value="B">Section B</option>
+                    <option value="C">Section C</option>
+                    <option value="D">Section D</option>
+                    <option value="E">Section E</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Timetable Creation Interface */}
+              <div className="bg-gradient-to-r from-royal/10 to-gold/10 rounded-lg p-6 border border-border/30">
+                <h3 className="text-lg font-semibold text-foreground mb-4">
+                  Timetable for Class {selectedTimetableClass}{selectedTimetableSection}
+                </h3>
+                
+                {/* Days of the week */}
+                <div className="space-y-4">
+                  {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].map((day) => (
+                    <div key={day} className="bg-card rounded-lg p-4 border border-border/30">
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="font-semibold text-foreground flex items-center">
+                          <Calendar className="h-4 w-4 mr-2 text-gold" />
+                          {day}
+                        </h4>
+                        <div className="flex space-x-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              // Add new period logic here
+                              setEditingPeriod({ day, time: '', subject: '', teacher: '', room: '' });
+                              setShowPeriodModal(true);
+                            }}
+                          >
+                            <Plus className="h-4 w-4 mr-1" />
+                            Add Period
+                          </Button>
+                          
+                          {(() => {
+                            // Check if day has periods to show delete button
+                            const timetableKey = `royal-academy-timetable-${selectedTimetableClass}${selectedTimetableSection}`;
+                            const storedTimetable = localStorage.getItem(timetableKey);
+                            let hasPeriods = false;
+                            
+                            if (storedTimetable) {
+                              const timetableData = JSON.parse(storedTimetable);
+                              const daySchedule = timetableData.schedule?.find((d: any) => d.day === day);
+                              hasPeriods = daySchedule?.periods?.length > 0;
+                            }
+                            
+                            if (hasPeriods) {
+                              return (
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => {
+                                    if (confirm(`Delete all periods for ${day}?`)) {
+                                      const timetableKey = `royal-academy-timetable-${selectedTimetableClass}${selectedTimetableSection}`;
+                                      const existingTimetable = localStorage.getItem(timetableKey);
+                                      
+                                      if (existingTimetable) {
+                                        const timetableData = JSON.parse(existingTimetable);
+                                        const daySchedule = timetableData.schedule?.find((d: any) => d.day === day);
+                                        
+                                        if (daySchedule) {
+                                          daySchedule.periods = [];
+                                          localStorage.setItem(timetableKey, JSON.stringify(timetableData));
+                                          alert(`All periods deleted for ${day}!`);
+                                          // Force re-render
+                                          setSelectedTimetableClass(selectedTimetableClass);
+                                        }
+                                      }
+                                    }
+                                  }}
+                                >
+                                  <X className="h-4 w-4 mr-1" />
+                                  Clear Day
+                                </Button>
+                              );
+                            }
+                            return null;
+                          })()}
+                        </div>
+                      </div>
+                      
+                      {/* Time slots for the day */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {(() => {
+                          // Load actual timetable data for this day
+                          const timetableKey = `royal-academy-timetable-${selectedTimetableClass}${selectedTimetableSection}`;
+                          const storedTimetable = localStorage.getItem(timetableKey);
+                          let dayPeriods = [];
+                          
+                          if (storedTimetable) {
+                            const timetableData = JSON.parse(storedTimetable);
+                            const daySchedule = timetableData.schedule?.find((d: any) => d.day === day);
+                            dayPeriods = daySchedule?.periods || [];
+                          }
+                          
+                          // If no periods exist, show empty state
+                          if (dayPeriods.length === 0) {
+                            return (
+                              <div className="col-span-full text-center py-8 text-muted-foreground">
+                                <Clock className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                                <p>No periods scheduled for {day}</p>
+                                <p className="text-sm">Click "Add Period" to create the schedule</p>
+                              </div>
+                            );
+                          }
+                          
+                          return dayPeriods.map((period: any, index: number) => (
+                            <div
+                              key={index}
+                              className={`p-3 rounded-lg border transition-colors relative group ${
+                                period.subject === 'Break' || period.subject === 'Lunch Break'
+                                  ? 'bg-muted/20 border-muted/30' 
+                                  : 'bg-background border-border/30 hover:border-gold/50'
+                              }`}
+                            >
+                              {/* Delete Button */}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (confirm(`Delete ${period.subject} period at ${period.time}?`)) {
+                                    // Delete period from timetable
+                                    const timetableKey = `royal-academy-timetable-${selectedTimetableClass}${selectedTimetableSection}`;
+                                    const existingTimetable = localStorage.getItem(timetableKey);
+                                    
+                                    if (existingTimetable) {
+                                      const timetableData = JSON.parse(existingTimetable);
+                                      const daySchedule = timetableData.schedule?.find((d: any) => d.day === day);
+                                      
+                                      if (daySchedule) {
+                                        // Remove the period at the specified index
+                                        daySchedule.periods.splice(index, 1);
+                                        localStorage.setItem(timetableKey, JSON.stringify(timetableData));
+                                        alert('Period deleted successfully!');
+                                        // Force re-render
+                                        setSelectedTimetableClass(selectedTimetableClass);
+                                      }
+                                    }
+                                  }
+                                }}
+                                className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs"
+                                title="Delete Period"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                              
+                              {/* Period Content - Click to Edit */}
+                              <div
+                                onClick={() => {
+                                  setEditingPeriod({ day, ...period, index });
+                                  setShowPeriodModal(true);
+                                }}
+                                className="cursor-pointer"
+                              >
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-xs font-medium text-muted-foreground">
+                                {period.time}
+                              </span>
+                              {period.room && (
+                                <span className="text-xs text-muted-foreground bg-muted/30 px-2 py-1 rounded">
+                                  {period.room}
+                                </span>
+                              )}
+                            </div>
+                            
+                            <h5 className={`font-semibold mb-1 ${
+                              period.subject === 'Break' 
+                                ? 'text-muted-foreground' 
+                                : 'text-foreground'
+                            }`}>
+                              {period.subject}
+                            </h5>
+                            
+                            {period.teacher && (
+                              <p className="text-sm text-muted-foreground">
+                                {period.teacher}
+                              </p>
+                            )}
+                              </div>
+                            </div>
+                          ));
+                        })()}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Action Buttons */}
+                <div className="mt-6 flex flex-wrap gap-3">
+                  <Button 
+                    className="bg-gradient-to-r from-gold to-yellow-500 text-black"
+                    onClick={() => {
+                      // Save timetable to localStorage
+                      const timetableKey = `royal-academy-timetable-${selectedTimetableClass}${selectedTimetableSection}`;
+                      const timetableData = {
+                        class: selectedTimetableClass,
+                        section: selectedTimetableSection,
+                        schedule: [
+                          { day: "Monday", periods: [
+                            { time: "9:00-9:45", subject: "Mathematics", teacher: "Dr. Smith", room: "101" },
+                            { time: "9:45-10:30", subject: "Physics", teacher: "Prof. Johnson", room: "Lab-1" },
+                            { time: "10:30-10:45", subject: "Break", teacher: "", room: "" },
+                            { time: "10:45-11:30", subject: "Chemistry", teacher: "Dr. Brown", room: "Lab-2" },
+                            { time: "11:30-12:15", subject: "English", teacher: "Ms. Davis", room: "102" },
+                            { time: "12:15-1:00", subject: "Computer Science", teacher: "Mr. Wilson", room: "Computer Lab" },
+                            { time: "1:00-2:00", subject: "Lunch Break", teacher: "", room: "" },
+                            { time: "2:00-2:45", subject: "Biology", teacher: "Dr. Taylor", room: "Lab-3" },
+                            { time: "2:45-3:30", subject: "Physical Education", teacher: "Coach Miller", room: "Playground" }
+                          ]},
+                          { day: "Tuesday", periods: [
+                            { time: "9:00-9:45", subject: "Physics", teacher: "Prof. Johnson", room: "Lab-1" },
+                            { time: "9:45-10:30", subject: "Mathematics", teacher: "Dr. Smith", room: "101" },
+                            { time: "10:30-10:45", subject: "Break", teacher: "", room: "" },
+                            { time: "10:45-11:30", subject: "English", teacher: "Ms. Davis", room: "102" },
+                            { time: "11:30-12:15", subject: "Chemistry", teacher: "Dr. Brown", room: "Lab-2" },
+                            { time: "12:15-1:00", subject: "Hindi", teacher: "Mrs. Sharma", room: "103" },
+                            { time: "1:00-2:00", subject: "Lunch Break", teacher: "", room: "" },
+                            { time: "2:00-2:45", subject: "Computer Science", teacher: "Mr. Wilson", room: "Computer Lab" },
+                            { time: "2:45-3:30", subject: "Art", teacher: "Ms. Anderson", room: "Art Room" }
+                          ]},
+                          { day: "Wednesday", periods: [
+                            { time: "9:00-9:45", subject: "Chemistry", teacher: "Dr. Brown", room: "Lab-2" },
+                            { time: "9:45-10:30", subject: "Biology", teacher: "Dr. Taylor", room: "Lab-3" },
+                            { time: "10:30-10:45", subject: "Break", teacher: "", room: "" },
+                            { time: "10:45-11:30", subject: "Mathematics", teacher: "Dr. Smith", room: "101" },
+                            { time: "11:30-12:15", subject: "Physics", teacher: "Prof. Johnson", room: "Lab-1" },
+                            { time: "12:15-1:00", subject: "English", teacher: "Ms. Davis", room: "102" },
+                            { time: "1:00-2:00", subject: "Lunch Break", teacher: "", room: "" },
+                            { time: "2:00-2:45", subject: "History", teacher: "Mr. Thompson", room: "104" },
+                            { time: "2:45-3:30", subject: "Geography", teacher: "Ms. Clark", room: "105" }
+                          ]},
+                          { day: "Thursday", periods: [
+                            { time: "9:00-9:45", subject: "English", teacher: "Ms. Davis", room: "102" },
+                            { time: "9:45-10:30", subject: "Mathematics", teacher: "Dr. Smith", room: "101" },
+                            { time: "10:30-10:45", subject: "Break", teacher: "", room: "" },
+                            { time: "10:45-11:30", subject: "Physics", teacher: "Prof. Johnson", room: "Lab-1" },
+                            { time: "11:30-12:15", subject: "Biology", teacher: "Dr. Taylor", room: "Lab-3" },
+                            { time: "12:15-1:00", subject: "Computer Science", teacher: "Mr. Wilson", room: "Computer Lab" },
+                            { time: "1:00-2:00", subject: "Lunch Break", teacher: "", room: "" },
+                            { time: "2:00-2:45", subject: "Chemistry", teacher: "Dr. Brown", room: "Lab-2" },
+                            { time: "2:45-3:30", subject: "Music", teacher: "Ms. Roberts", room: "Music Room" }
+                          ]},
+                          { day: "Friday", periods: [
+                            { time: "9:00-9:45", subject: "Biology", teacher: "Dr. Taylor", room: "Lab-3" },
+                            { time: "9:45-10:30", subject: "Chemistry", teacher: "Dr. Brown", room: "Lab-2" },
+                            { time: "10:30-10:45", subject: "Break", teacher: "", room: "" },
+                            { time: "10:45-11:30", subject: "English", teacher: "Ms. Davis", room: "102" },
+                            { time: "11:30-12:15", subject: "Mathematics", teacher: "Dr. Smith", room: "101" },
+                            { time: "12:15-1:00", subject: "Physical Education", teacher: "Coach Miller", room: "Playground" },
+                            { time: "1:00-2:00", subject: "Lunch Break", teacher: "", room: "" },
+                            { time: "2:00-2:45", subject: "Hindi", teacher: "Mrs. Sharma", room: "103" },
+                            { time: "2:45-3:30", subject: "Library Period", teacher: "Librarian", room: "Library" }
+                          ]},
+                          { day: "Saturday", periods: [
+                            { time: "9:00-9:45", subject: "Extra Classes", teacher: "Various Teachers", room: "Multiple Rooms" },
+                            { time: "9:45-10:30", subject: "Sports", teacher: "Coach Miller", room: "Playground" },
+                            { time: "10:30-10:45", subject: "Break", teacher: "", room: "" },
+                            { time: "10:45-11:30", subject: "Art & Craft", teacher: "Ms. Anderson", room: "Art Room" },
+                            { time: "11:30-12:15", subject: "Music", teacher: "Ms. Roberts", room: "Music Room" },
+                            { time: "12:15-1:00", subject: "Library Period", teacher: "Librarian", room: "Library" }
+                          ]}
+                        ]
+                      };
+                      localStorage.setItem(timetableKey, JSON.stringify(timetableData));
+                      alert(`Timetable saved for Class ${selectedTimetableClass}${selectedTimetableSection}!`);
+                    }}
+                  >
+                    <Clock className="h-4 w-4 mr-2" />
+                    Save Timetable
+                  </Button>
+                  <Button variant="outline">
+                    <Eye className="h-4 w-4 mr-2" />
+                    Preview Timetable
+                  </Button>
+                  <Button variant="outline">
+                    <FileText className="h-4 w-4 mr-2" />
+                    Export to PDF
+                  </Button>
+                  <Button 
+                    variant="destructive"
+                    onClick={() => {
+                      if (confirm(`Delete entire timetable for Class ${selectedTimetableClass}${selectedTimetableSection}? This action cannot be undone.`)) {
+                        const timetableKey = `royal-academy-timetable-${selectedTimetableClass}${selectedTimetableSection}`;
+                        localStorage.removeItem(timetableKey);
+                        alert(`Timetable deleted for Class ${selectedTimetableClass}${selectedTimetableSection}!`);
+                        // Force re-render to show empty state
+                        setSelectedTimetableClass(selectedTimetableClass);
+                      }
+                    }}
+                  >
+                    <X className="h-4 w-4 mr-2" />
+                    Delete Timetable
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Period Edit Modal */}
+        {showPeriodModal && editingPeriod && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-card rounded-xl p-6 w-full max-w-md border border-border/50"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-foreground">
+                  Edit Period - {editingPeriod.day}
+                </h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowPeriodModal(false)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Time Slot</label>
+                  <Input
+                    value={editingPeriod.time}
+                    onChange={(e) => setEditingPeriod({ ...editingPeriod, time: e.target.value })}
+                    placeholder="e.g., 9:00-9:45"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">Subject</label>
+                  <select
+                    value={editingPeriod.subject}
+                    onChange={(e) => setEditingPeriod({ ...editingPeriod, subject: e.target.value })}
+                    className="w-full p-3 border border-border rounded-lg bg-background"
+                  >
+                    <option value="">Select Subject</option>
+                    <option value="Mathematics">Mathematics</option>
+                    <option value="Physics">Physics</option>
+                    <option value="Chemistry">Chemistry</option>
+                    <option value="Biology">Biology</option>
+                    <option value="English">English</option>
+                    <option value="Hindi">Hindi</option>
+                    <option value="Computer Science">Computer Science</option>
+                    <option value="Physical Education">Physical Education</option>
+                    <option value="Art">Art</option>
+                    <option value="Music">Music</option>
+                    <option value="Break">Break</option>
+                    <option value="Lunch Break">Lunch Break</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">Teacher</label>
+                  <Input
+                    value={editingPeriod.teacher}
+                    onChange={(e) => setEditingPeriod({ ...editingPeriod, teacher: e.target.value })}
+                    placeholder="Teacher name"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">Room/Location</label>
+                  <Input
+                    value={editingPeriod.room}
+                    onChange={(e) => setEditingPeriod({ ...editingPeriod, room: e.target.value })}
+                    placeholder="e.g., Room 101, Lab-1, Playground"
+                  />
+                </div>
+              </div>
+
+              <div className="flex space-x-3 mt-6">
+                <Button
+                  onClick={() => {
+                    // Save period changes to localStorage
+                    const timetableKey = `royal-academy-timetable-${selectedTimetableClass}${selectedTimetableSection}`;
+                    const existingTimetable = localStorage.getItem(timetableKey);
+                    
+                    if (existingTimetable && editingPeriod) {
+                      const timetableData = JSON.parse(existingTimetable);
+                      const daySchedule = timetableData.schedule?.find((d: any) => d.day === editingPeriod.day);
+                      
+                      if (daySchedule) {
+                        if (editingPeriod.index !== undefined) {
+                          // Edit existing period
+                          daySchedule.periods[editingPeriod.index] = {
+                            time: editingPeriod.time,
+                            subject: editingPeriod.subject,
+                            teacher: editingPeriod.teacher,
+                            room: editingPeriod.room
+                          };
+                        } else {
+                          // Add new period
+                          daySchedule.periods.push({
+                            time: editingPeriod.time,
+                            subject: editingPeriod.subject,
+                            teacher: editingPeriod.teacher,
+                            room: editingPeriod.room
+                          });
+                        }
+                        
+                        localStorage.setItem(timetableKey, JSON.stringify(timetableData));
+                        alert('Period saved successfully!');
+                      }
+                    }
+                    
+                    setShowPeriodModal(false);
+                    setEditingPeriod(null);
+                    // Force re-render by updating a state
+                    setSelectedTimetableClass(selectedTimetableClass);
+                  }}
+                  className="flex-1 bg-gradient-to-r from-gold to-yellow-500 text-black"
+                >
+                  Save Period
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowPeriodModal(false);
+                    setEditingPeriod(null);
+                  }}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* Admissions Page Manager Section */}
+        {activeSection === "admissionsmanager" && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-6"
+          >
+            <div className="bg-card/95 backdrop-blur-md rounded-xl p-6 border border-border/50">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-2xl font-heading font-bold text-foreground">Edit Admissions Page</h2>
+                  <p className="text-sm text-muted-foreground">Manage all content on the admissions page including FAQs, requirements, and contact information</p>
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={() => setActiveSection("dashboard")}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+
+              <AdmissionsPageManager />
+            </div>
+          </motion.div>
+        )}
+
       </div>
     </div>
   );

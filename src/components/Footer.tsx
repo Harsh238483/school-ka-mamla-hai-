@@ -1,5 +1,6 @@
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
+import { useState } from "react";
 import { 
   MapPin, 
   Phone, 
@@ -12,12 +13,30 @@ import {
   GraduationCap,
   Award,
   Users,
-  BookOpen
+  BookOpen,
+  Plus,
+  Minus
 } from "lucide-react";
 import schoolLogo from "@/assets/school-logo.png";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
+  
+  // State for collapsible sections on mobile
+  const [expandedSections, setExpandedSections] = useState({
+    quickLinks: false,
+    programs: false,
+    resources: false,
+    academic: false,
+    achievements: false
+  });
+
+  const toggleSection = (section: keyof typeof expandedSections) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
 
   const quickLinks = [
     { name: "About Us", path: "/about" },
@@ -59,6 +78,51 @@ const Footer = () => {
     { icon: BookOpen, text: "Comprehensive Curriculum" }
   ];
 
+  // Collapsible Section Component for Mobile
+  const CollapsibleSection = ({ 
+    title, 
+    sectionKey, 
+    children 
+  }: { 
+    title: string; 
+    sectionKey: keyof typeof expandedSections; 
+    children: React.ReactNode;
+  }) => (
+    <div className="sm:hidden border-b border-border/30 last:border-b-0">
+      <button
+        onClick={() => toggleSection(sectionKey)}
+        className="w-full flex items-center justify-between py-4 px-2 text-left"
+      >
+        <h3 className="text-lg font-heading font-bold text-gradient-gold">{title}</h3>
+        <motion.div
+          animate={{ rotate: expandedSections[sectionKey] ? 180 : 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          {expandedSections[sectionKey] ? (
+            <Minus className="h-5 w-5 text-gold" />
+          ) : (
+            <Plus className="h-5 w-5 text-gold" />
+          )}
+        </motion.div>
+      </button>
+      <AnimatePresence>
+        {expandedSections[sectionKey] && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="overflow-hidden"
+          >
+            <div className="pb-4 px-2">
+              {children}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+
   return (
     <footer className="relative bg-gradient-to-br from-background via-muted/20 to-card text-foreground overflow-hidden border-t border-border transition-all duration-500">
       {/* Background Pattern */}
@@ -71,8 +135,153 @@ const Footer = () => {
 
       <div className="relative z-10">
         {/* Main Footer Content */}
-        <div className="container-wide section-padding">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-12 lg:gap-6 xl:gap-8">
+        <div className="container-wide py-6 sm:py-12 px-4 sm:px-6">
+          {/* Mobile Compact Footer */}
+          <div className="sm:hidden">
+            {/* School Info - Always visible on mobile */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className="mb-6 pb-6 border-b border-border/30"
+            >
+              <Link to="/" className="flex items-center space-x-3 mb-4 group">
+                <motion.img
+                  whileHover={{ scale: 1.1, rotate: 5 }}
+                  transition={{ duration: 0.3 }}
+                  src={schoolLogo}
+                  alt="Royal Academy"
+                  className="h-12 w-12 flex-shrink-0 animate-glow"
+                />
+                <div className="flex flex-col">
+                  <span className="text-lg font-heading font-bold text-gradient-gold">
+                    Royal Academy
+                  </span>
+                  <span className="text-xs text-black dark:text-muted-foreground tracking-wider">
+                    Excellence in Education
+                  </span>
+                </div>
+              </Link>
+              
+              <p className="text-sm text-black dark:text-muted-foreground leading-relaxed mb-4">
+                Nurturing minds, shaping futures. For over 148 years, Royal Academy has been 
+                committed to providing world-class education.
+              </p>
+
+              {/* Contact Info - Compact */}
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2 text-black dark:text-muted-foreground">
+                  <Phone className="h-4 w-4 flex-shrink-0" />
+                  <span className="text-xs">+1 (555) 123-4567</span>
+                </div>
+                <div className="flex items-center space-x-2 text-black dark:text-muted-foreground">
+                  <Mail className="h-4 w-4 flex-shrink-0" />
+                  <span className="text-xs">info@royalacademy.edu</span>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Collapsible Sections */}
+            <div className="space-y-0">
+              <CollapsibleSection title="Quick Links" sectionKey="quickLinks">
+                <ul className="space-y-2">
+                  {quickLinks.map((link) => (
+                    <li key={link.name}>
+                      <Link
+                        to={link.path}
+                        className="text-sm text-black dark:text-muted-foreground hover:text-gold transition-colors"
+                      >
+                        {link.name}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </CollapsibleSection>
+
+              <CollapsibleSection title="Programs" sectionKey="programs">
+                <ul className="space-y-2">
+                  {programs.map((program) => (
+                    <li key={program.name}>
+                      <Link
+                        to={program.path}
+                        className="text-sm text-black dark:text-muted-foreground hover:text-gold transition-colors"
+                      >
+                        {program.name}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </CollapsibleSection>
+
+              <CollapsibleSection title="Resources" sectionKey="resources">
+                <ul className="space-y-2">
+                  {resources.map((resource) => (
+                    <li key={resource.name}>
+                      <Link
+                        to={resource.path}
+                        className="text-sm text-black dark:text-muted-foreground hover:text-gold transition-colors"
+                      >
+                        {resource.name}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </CollapsibleSection>
+
+              <CollapsibleSection title="Academic Levels" sectionKey="academic">
+                <ul className="space-y-2">
+                  {academicPrograms.slice(0, 4).map((program) => (
+                    <li key={program.name}>
+                      <Link
+                        to={program.path}
+                        className="text-sm text-black dark:text-muted-foreground hover:text-gold transition-colors"
+                      >
+                        {program.name}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </CollapsibleSection>
+
+              <CollapsibleSection title="Follow Us" sectionKey="achievements">
+                <div className="space-y-4">
+                  {/* Achievements */}
+                  <div className="space-y-2">
+                    {achievements.slice(0, 2).map((achievement) => (
+                      <div key={achievement.text} className="flex items-center space-x-2">
+                        <achievement.icon className="h-4 w-4 text-gold flex-shrink-0" />
+                        <span className="text-xs text-black dark:text-muted-foreground">{achievement.text}</span>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {/* Social Media */}
+                  <div className="flex space-x-3">
+                    {[
+                      { icon: Facebook, color: "hover:text-blue-400" },
+                      { icon: Twitter, color: "hover:text-sky-400" },
+                      { icon: Instagram, color: "hover:text-pink-400" },
+                      { icon: Linkedin, color: "hover:text-blue-500" },
+                      { icon: Youtube, color: "hover:text-red-500" }
+                    ].map((social, index) => (
+                      <motion.a
+                        key={index}
+                        href="#"
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        className={`p-2 rounded-full bg-muted/10 border border-border text-black dark:text-muted-foreground ${social.color} transition-all duration-300`}
+                      >
+                        <social.icon className="h-4 w-4" />
+                      </motion.a>
+                    ))}
+                  </div>
+                </div>
+              </CollapsibleSection>
+            </div>
+          </div>
+
+          {/* Desktop/Tablet Full Footer */}
+          <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-6 gap-8 lg:gap-6 xl:gap-8">
             
             {/* School Info */}
             <motion.div
@@ -316,30 +525,33 @@ const Footer = () => {
           transition={{ duration: 0.6, delay: 0.4 }}
           className="border-t border-border bg-muted/10 backdrop-blur-sm"
         >
-          <div className="container-wide py-6">
-            <div className="flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0">
-              <div className="text-center md:text-left">
-                <p className="text-black dark:text-muted-foreground text-sm">
+          <div className="container-wide py-4 sm:py-6 px-4 sm:px-6">
+            <div className="flex flex-col sm:flex-row items-center justify-between space-y-3 sm:space-y-0">
+              <div className="text-center sm:text-left">
+                <p className="text-black dark:text-muted-foreground text-xs sm:text-sm">
                   © {currentYear} Royal Academy. All rights reserved.
                 </p>
-                <p className="text-black dark:text-muted-foreground/80 text-xs mt-1">
+                <p className="text-black dark:text-muted-foreground/80 text-xs mt-1 hidden sm:block">
                   Empowering minds since 1875 • Building tomorrow's leaders today
                 </p>
               </div>
               
-              <div className="flex items-center space-x-6 text-sm">
+              {/* Mobile: Stack links vertically, Desktop: Horizontal */}
+              <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-4 text-xs sm:text-sm">
                 <Link to="/privacy" className="text-black dark:text-muted-foreground hover:text-gold transition-colors">
                   Privacy Policy
                 </Link>
                 <Link to="/terms" className="text-black dark:text-muted-foreground hover:text-gold transition-colors">
                   Terms of Service
                 </Link>
-                <Link to="/cookies" className="text-black dark:text-muted-foreground hover:text-gold transition-colors">
-                  Cookie Policy
-                </Link>
-                <Link to="/sitemap" className="text-black dark:text-muted-foreground hover:text-gold transition-colors">
-                  Sitemap
-                </Link>
+                <div className="flex space-x-4 sm:contents">
+                  <Link to="/cookies" className="text-black dark:text-muted-foreground hover:text-gold transition-colors">
+                    Cookie Policy
+                  </Link>
+                  <Link to="/sitemap" className="text-black dark:text-muted-foreground hover:text-gold transition-colors">
+                    Sitemap
+                  </Link>
+                </div>
               </div>
             </div>
           </div>

@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { AnimatePresence, motion } from "framer-motion";
 import Index from "./pages/Index";
@@ -41,9 +41,17 @@ import PrincipalLogin from "./pages/PrincipalLogin";
 import PrincipalDashboard from "./pages/PrincipalDashboard";
 import TeacherLogin from "./pages/TeacherLogin";
 import TeacherDashboard from "./pages/TeacherDashboard";
-import AuthSignup from "./pages/AuthSignup";
+import StudentLogin from "./pages/StudentLoginNew";
+import StudentDashboard from "./pages/StudentDashboard";
+import AuthLanding from "./pages/AuthLanding";
 import CurriculumGuide from "./pages/CurriculumGuide";
 import CookieConsentBanner from "./components/CookieConsentBanner";
+import ProtectedRoute from "./components/ProtectedRoute";
+import CreateTeacherID from "./pages/CreateTeacherID";
+import ManageTeacherID from "./pages/ManageTeacherID";
+import ManageTeachers from "./pages/ManageTeachers";
+import TeacherProfileSettings from "./pages/TeacherProfileSettings";
+import StudentProfileSettings from "./pages/StudentProfileSettings";
 
 const queryClient = new QueryClient();
 
@@ -393,6 +401,8 @@ function AnimatedRoutes() {
             <PrincipalDashboard />
           </motion.div>
         } />
+        {/* Alias: support underscore URL to avoid blank page */}
+        <Route path="/principal_dashboard" element={<Navigate to="/principal-dashboard" replace />} />
         <Route path="/teacher" element={
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -401,6 +411,16 @@ function AnimatedRoutes() {
             transition={{ duration: 0.4 }}
           >
             <TeacherLogin />
+          </motion.div>
+        } />
+        <Route path="/auth" element={
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.4 }}
+          >
+            <AuthLanding />
           </motion.div>
         } />
         <Route path="/teacher-dashboard" element={
@@ -413,14 +433,84 @@ function AnimatedRoutes() {
             <TeacherDashboard />
           </motion.div>
         } />
-        <Route path="/signup" element={
+        <Route path="/teacher-profile-settings" element={
+          <ProtectedRoute 
+            authKey="teacherAuth" 
+            redirectTo="/teacher"
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.4 }}
+            >
+              <TeacherProfileSettings />
+            </motion.div>
+          </ProtectedRoute>
+        } />
+        <Route path="/student-login" element={
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.4 }}
           >
-            <AuthSignup />
+            <StudentLogin />
+          </motion.div>
+        } />
+        <Route path="/student-dashboard" element={
+          <ProtectedRoute 
+            authKey="studentAuth" 
+            redirectTo="/student-login"
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.4 }}
+            >
+              <StudentDashboard />
+            </motion.div>
+          </ProtectedRoute>
+        } />
+        <Route path="/student-profile-settings" element={
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.4 }}
+          >
+            <StudentProfileSettings />
+          </motion.div>
+        } />
+        <Route path="/create-teacher-id" element={
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.4 }}
+          >
+            <CreateTeacherID />
+          </motion.div>
+        } />
+        <Route path="/manage-teacher-id" element={
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.4 }}
+          >
+            <ManageTeacherID />
+          </motion.div>
+        } />
+        <Route path="/manage-teachers" element={
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.4 }}
+          >
+            <ManageTeachers />
           </motion.div>
         } />
         <Route path="*" element={<NotFound />} />

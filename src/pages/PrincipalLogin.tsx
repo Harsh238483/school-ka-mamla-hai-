@@ -42,7 +42,7 @@ const PrincipalLogin = () => {
         transition={{ duration: 0.6 }}
         className="w-full max-w-md"
       >
-        <div className="bg-card/95 backdrop-blur-md rounded-2xl shadow-2xl border border-border/50 p-8">
+        <div className="bg-card/95 backdrop-blur-md rounded-2xl shadow-2xl border border-border/50 p-6 sm:p-8">
           {/* Header */}
           <div className="text-center mb-8">
             <motion.div
@@ -76,48 +76,35 @@ const PrincipalLogin = () => {
           )}
 
           {/* Login Form */}
-          <form onSubmit={handleLogin} className="space-y-6">
-            <div className="space-y-2">
+          <form onSubmit={handleLogin} className="space-y-8 sm:space-y-6">
+            <div className="space-y-3 sm:space-y-2">
               <label htmlFor="email" className="text-sm font-medium text-foreground">
                 Email Address
               </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="principal.1025@gmail.com"
-                  className="pl-10 h-12"
-                  required
-                />
-              </div>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="principal.1025@gmail.com"
+                className="h-12"
+                required
+              />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-3 sm:space-y-2">
               <label htmlFor="password" className="text-sm font-medium text-foreground">
                 Password
               </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter your password"
-                  className="pl-10 pr-10 h-12"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your password"
+                className="h-12"
+                required
+              />
             </div>
 
             <Button

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { 
   Save, 
@@ -9,9 +9,11 @@ import {
   Award,
   Target,
   Heart,
-  Shield
+  Shield,
+  X,
+  Plus
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button-variants";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -41,9 +43,22 @@ interface AboutPageData {
     community: { title: string; description: string };
   };
   
-  // Leadership Section
+  // Principal and Teacher Section
   leadershipTitle: string;
   leadershipDescription: string;
+  
+  // Staff Members
+  staffMembers: {
+    id: string;
+    name: string;
+    position: string;
+    description: string;
+    photos: string[];
+    email?: string;
+    phone?: string;
+    qualifications?: string;
+    experience?: string;
+  }[];
   
   // Statistics
   stats: {
@@ -100,8 +115,61 @@ const AboutPageManager = () => {
       }
     },
     
-    leadershipTitle: "Leadership & Governance",
-    leadershipDescription: "Our institution is guided by experienced educators and administrators who bring decades of expertise in academic leadership, student development, and educational innovation.",
+    leadershipTitle: "Principal and Teacher Section",
+    leadershipDescription: "Meet our dedicated leadership team and faculty members who guide Royal Academy towards excellence in education.",
+    
+    staffMembers: [
+      {
+        id: "principal-1",
+        name: "Dr. Sarah Johnson",
+        position: "Principal",
+        description: "Dr. Sarah Johnson brings over 20 years of educational leadership experience to Royal Academy. She holds a Ph.D. in Educational Administration and is passionate about creating innovative learning environments that inspire both students and teachers.",
+        photos: [
+          "https://images.unsplash.com/photo-1494790108755-2616c669-b163?w=400&h=400&fit=crop&crop=face&auto=format&q=80"
+        ],
+        email: "principal@royalacademy.edu",
+        phone: "+1 (555) 123-4567",
+        qualifications: "Ph.D. in Educational Administration, M.Ed. in Curriculum Development",
+        experience: "20+ years in educational leadership"
+      },
+      {
+        id: "vice-principal-1",
+        name: "Prof. Michael Chen",
+        position: "Vice Principal",
+        description: "Prof. Michael Chen oversees academic affairs and curriculum development at Royal Academy. With his extensive background in mathematics and educational technology, he ensures our academic programs meet the highest standards.",
+        photos: [
+          "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face&auto=format&q=80"
+        ],
+        email: "vp@royalacademy.edu",
+        phone: "+1 (555) 123-4568",
+        qualifications: "M.S. in Mathematics, M.Ed. in Educational Technology",
+        experience: "15+ years in academic administration"
+      },
+      {
+        id: "teacher-1",
+        name: "Dr. Emily Rodriguez",
+        position: "Head of Science Department",
+        description: "Dr. Emily Rodriguez leads our science department with expertise in biology and environmental science. She is dedicated to fostering scientific inquiry and critical thinking among our students.",
+        photos: [
+          "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400&h=400&fit=crop&crop=face&auto=format&q=80"
+        ],
+        email: "emily.rodriguez@royalacademy.edu",
+        qualifications: "Ph.D. in Biology, M.S. in Environmental Science",
+        experience: "12+ years in science education"
+      },
+      {
+        id: "teacher-2",
+        name: "Prof. David Wilson",
+        position: "Head of Mathematics Department",
+        description: "Prof. David Wilson brings innovative teaching methods to mathematics education. His passion for making complex mathematical concepts accessible has helped countless students excel in STEM fields.",
+        photos: [
+          "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face&auto=format&q=80"
+        ],
+        email: "david.wilson@royalacademy.edu",
+        qualifications: "M.S. in Mathematics, B.Ed. in Secondary Education",
+        experience: "10+ years in mathematics education"
+      }
+    ],
     
     stats: {
       students: { number: "2,500+", label: "Students" },
@@ -129,14 +197,37 @@ const AboutPageManager = () => {
 
   const [showPreview, setShowPreview] = useState(false);
   const [message, setMessage] = useState("");
+  const [editingStaff, setEditingStaff] = useState<any>(null);
+  const [isEditingStaff, setIsEditingStaff] = useState(false);
+  const [isAddingStaff, setIsAddingStaff] = useState(false);
+  // Photo add helpers
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [photoUrlInput, setPhotoUrlInput] = useState("");
 
   // Load data from localStorage
   useEffect(() => {
-    const savedData = localStorage.getItem('royal-academy-about');
-    if (savedData) {
-      setAboutData(JSON.parse(savedData));
+    try {
+      const savedData = localStorage.getItem('royal-academy-about');
+      if (savedData) {
+        const parsedData = JSON.parse(savedData);
+        setAboutData(parsedData);
+        console.log('AboutPageManager: Loaded data from localStorage');
+      } else {
+        console.log('AboutPageManager: No saved data, using defaults');
+      }
+    } catch (error) {
+      console.error('AboutPageManager: Error loading data:', error);
     }
   }, []);
+
+  // Auto-persist any changes to the About data so the public About page sees updates immediately
+  useEffect(() => {
+    try {
+      localStorage.setItem('royal-academy-about', JSON.stringify(aboutData));
+    } catch (error) {
+      console.error('AboutPageManager: Error saving data:', error);
+    }
+  }, [aboutData]);
 
   const saveData = () => {
     localStorage.setItem('royal-academy-about', JSON.stringify(aboutData));
@@ -177,8 +268,126 @@ const AboutPageManager = () => {
     }));
   };
 
+  // Staff Management Functions
+  const handleAddStaff = () => {
+    const newStaff = {
+      id: Date.now().toString(),
+      name: "",
+      position: "",
+      description: "",
+      photos: [],
+      email: "",
+      phone: "",
+      qualifications: "",
+      experience: ""
+    };
+    setEditingStaff(newStaff);
+    setIsAddingStaff(true);
+    setIsEditingStaff(true);
+  };
+
+  const handleEditStaff = (staff: any) => {
+    setEditingStaff({ ...staff });
+    setIsAddingStaff(false);
+    setIsEditingStaff(true);
+  };
+
+  const handleSaveStaff = () => {
+    if (!editingStaff || !editingStaff.name.trim() || !editingStaff.position.trim()) {
+      alert("Please fill in name and position");
+      return;
+    }
+
+    setAboutData(prev => {
+      const updatedStaff = isAddingStaff 
+        ? [...prev.staffMembers, editingStaff]
+        : prev.staffMembers.map(staff => 
+            staff.id === editingStaff.id ? editingStaff : staff
+          );
+      
+      return { ...prev, staffMembers: updatedStaff };
+    });
+
+    setIsEditingStaff(false);
+    setEditingStaff(null);
+    setMessage(isAddingStaff ? "Staff member added successfully!" : "Staff member updated successfully!");
+    setTimeout(() => setMessage(""), 3000);
+  };
+
+  const handleDeleteStaff = (staffId: string) => {
+    if (confirm("Are you sure you want to delete this staff member?")) {
+      setAboutData(prev => ({
+        ...prev,
+        staffMembers: prev.staffMembers.filter(staff => staff.id !== staffId)
+      }));
+      setMessage("Staff member deleted successfully!");
+      setTimeout(() => setMessage(""), 3000);
+    }
+  };
+
+  const updateStaffField = (field: string, value: any) => {
+    if (!editingStaff) return;
+    setEditingStaff({ ...editingStaff, [field]: value });
+  };
+
+  // Trigger hidden file input for image upload
+  const addPhoto = () => {
+    if (!editingStaff) return;
+    if (editingStaff.photos.length >= 4) {
+      alert("Maximum 4 photos allowed per staff member");
+      return;
+    }
+    fileInputRef.current?.click();
+  };
+
+  // Handle selected file, store as data URL for preview/persistence
+  const handlePhotoFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      const file = e.target.files?.[0];
+      if (!file || !editingStaff) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUrl = reader.result as string;
+        setEditingStaff((prev: any) => ({
+          ...prev,
+          photos: [...(prev?.photos || []), dataUrl].slice(0, 4)
+        }));
+      };
+      reader.readAsDataURL(file);
+      // reset input value so same file can be chosen again if needed
+      e.currentTarget.value = "";
+    } catch {}
+  };
+
+  // Add photo by direct URL input
+  const addPhotoByUrl = () => {
+    if (!editingStaff) return;
+    const url = photoUrlInput.trim();
+    if (!url) return;
+    if (editingStaff.photos.length >= 4) {
+      alert("Maximum 4 photos allowed per staff member");
+      return;
+    }
+    setEditingStaff({ ...editingStaff, photos: [...editingStaff.photos, url] });
+    setPhotoUrlInput("");
+  };
+
+  const removePhoto = (index: number) => {
+    if (!editingStaff) return;
+    setEditingStaff({
+      ...editingStaff,
+      photos: editingStaff.photos.filter((_: any, i: number) => i !== index)
+    });
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 min-h-screen bg-background text-foreground p-4">
+      {/* Test Header */}
+      <div className="p-4 bg-green-100 border border-green-300 rounded-lg">
+        <h3 className="text-lg font-bold text-green-800">✅ AboutPageManager is Working!</h3>
+        <p className="text-sm text-green-600">Component loaded successfully. You can now manage the About page content.</p>
+      </div>
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-4 sm:space-y-0">
         <div>
@@ -463,6 +672,222 @@ const AboutPageManager = () => {
         </div>
       </div>
 
+      {/* Staff Management Section */}
+      <div className="bg-card border border-border rounded-lg p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-heading font-bold">Principal and Teacher Section</h3>
+          <Button onClick={handleAddStaff} className="bg-gradient-to-r from-royal to-gold text-white">
+            <Users className="h-4 w-4 mr-2" />
+            Add Staff Member
+          </Button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {aboutData.staffMembers.map((staff) => (
+            <motion.div
+              key={staff.id}
+              layout
+              className="bg-background/50 border border-border rounded-lg p-4 hover:shadow-md transition-all duration-200"
+            >
+              <div className="flex items-center space-x-3 mb-3">
+                {staff.photos[0] && (
+                  <img
+                    src={staff.photos[0]}
+                    alt={staff.name}
+                    className="w-12 h-12 rounded-full object-cover"
+                  />
+                )}
+                <div className="flex-1">
+                  <h4 className="font-semibold text-foreground">{staff.name}</h4>
+                  <p className="text-sm text-muted-foreground">{staff.position}</p>
+                </div>
+              </div>
+              
+              <p className="text-sm text-muted-foreground mb-3 line-clamp-3">{staff.description}</p>
+              
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleEditStaff(staff)}
+                >
+                  <Edit className="h-4 w-4" />
+                  <span className="hidden sm:inline ml-2">Edit</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleDeleteStaff(staff.id)}
+                  className="text-red-600 hover:text-red-700"
+                >
+                  <X className="h-4 w-4" />
+                  <span className="hidden sm:inline ml-2">Delete</span>
+                </Button>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+
+      {/* Staff Edit Modal */}
+      {isEditingStaff && editingStaff && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-card rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-heading font-bold">
+                {isAddingStaff ? "Add Staff Member" : "Edit Staff Member"}
+              </h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsEditingStaff(false)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Name *</label>
+                  <Input
+                    value={editingStaff.name}
+                    onChange={(e) => updateStaffField('name', e.target.value)}
+                    placeholder="Enter full name"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Position *</label>
+                  <Input
+                    value={editingStaff.position}
+                    onChange={(e) => updateStaffField('position', e.target.value)}
+                    placeholder="e.g., Principal, Vice Principal, Teacher"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium mb-2 block">Description</label>
+                <Textarea
+                  value={editingStaff.description}
+                  onChange={(e) => updateStaffField('description', e.target.value)}
+                  placeholder="Write about this person..."
+                  rows={4}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Email</label>
+                  <Input
+                    type="email"
+                    value={editingStaff.email}
+                    onChange={(e) => updateStaffField('email', e.target.value)}
+                    placeholder="email@royalacademy.edu"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Phone</label>
+                  <Input
+                    value={editingStaff.phone}
+                    onChange={(e) => updateStaffField('phone', e.target.value)}
+                    placeholder="+1 (555) 123-4567"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium mb-2 block">Qualifications</label>
+                <Input
+                  value={editingStaff.qualifications}
+                  onChange={(e) => updateStaffField('qualifications', e.target.value)}
+                  placeholder="Ph.D., M.Ed., etc."
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium mb-2 block">Experience</label>
+                <Input
+                  value={editingStaff.experience}
+                  onChange={(e) => updateStaffField('experience', e.target.value)}
+                  placeholder="10+ years in education"
+                />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm font-medium">Photos (Max 4)</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handlePhotoFileChange}
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={addPhoto}
+                      disabled={editingStaff.photos.length >= 4}
+                    >
+                      <Plus className="h-3 w-3 mr-1" /> Upload
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Add via URL */}
+                <div className="flex items-center gap-2 mb-3">
+                  <Input
+                    placeholder="Paste image URL..."
+                    value={photoUrlInput}
+                    onChange={(e) => setPhotoUrlInput(e.target.value)}
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={addPhotoByUrl}
+                    disabled={!photoUrlInput.trim() || editingStaff.photos.length >= 4}
+                  >
+                    Add URL
+                  </Button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  {editingStaff.photos.map((photo: string, index: number) => (
+                    <div key={index} className="relative">
+                      <img
+                        src={photo}
+                        alt={`Photo ${index + 1}`}
+                        className="w-full h-24 object-cover rounded border"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => removePhoto(index)}
+                        className="absolute top-1 right-1 h-6 w-6 p-0 bg-red-600 text-white hover:bg-red-700"
+                      >
+                        ×
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end space-x-3 mt-6 pt-6 border-t">
+              <Button variant="outline" onClick={() => setIsEditingStaff(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleSaveStaff} className="bg-gradient-to-r from-royal to-gold text-white">
+                <Save className="h-4 w-4 mr-2" />
+                {isAddingStaff ? "Add" : "Update"} Staff Member
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Preview Link */}
       {showPreview && (
         <div className="bg-card border border-border rounded-lg p-4">
@@ -471,11 +896,18 @@ const AboutPageManager = () => {
               <h3 className="font-semibold text-foreground">Live Preview</h3>
               <p className="text-sm text-muted-foreground">View how the about page looks to visitors</p>
             </div>
-            <Button variant="outline" asChild className="w-full sm:w-auto">
-              <a href="/about" target="_blank" rel="noopener noreferrer">
-                <Eye className="h-4 w-4 mr-2" />
-                Open About Page
-              </a>
+            <Button
+              variant="outline"
+              className="w-full sm:w-auto"
+              onClick={() => {
+                try {
+                  localStorage.setItem('royal-academy-about', JSON.stringify(aboutData));
+                } catch {}
+                window.open('/about', '_blank');
+              }}
+            >
+              <Eye className="h-4 w-4 mr-2" />
+              Open About Page
             </Button>
           </div>
         </div>

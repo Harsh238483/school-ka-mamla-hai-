@@ -2,6 +2,7 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { motion } from "framer-motion";
 import { useParams, Link } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { 
   ArrowLeft, Crown, Trophy, Medal, Award, Star, GraduationCap, 
   BookOpen, Target, Calendar, MapPin, Phone, Mail, Download,
@@ -11,6 +12,15 @@ import { Button } from "@/components/ui/button";
 
 const StudentProfile = () => {
   const { studentId } = useParams();
+  const [allStudents, setAllStudents] = useState<any[]>([]);
+
+  // Load students from localStorage
+  useEffect(() => {
+    const savedStudents = localStorage.getItem('royal-academy-top-scorers');
+    if (savedStudents) {
+      setAllStudents(JSON.parse(savedStudents));
+    }
+  }, []);
 
   // Student data - in a real app, this would come from an API
   const students = {
@@ -145,10 +155,246 @@ const StudentProfile = () => {
       ],
       testimonial: "Sophia's passion for environmental science is matched only by her dedication to making a real difference in the world. Her research shows maturity beyond her years.",
       testimonialBy: "Dr. Lisa Chen, Science Department Head"
+    },
+    "alexander-thompson": {
+      id: 4,
+      name: "Alexander Thompson",
+      grade: "Grade 12",
+      subject: "english",
+      score: "96.7%",
+      year: "2024",
+      rank: 1,
+      achievements: ["Literary Magazine Editor", "Debate Champion", "Writing Contest Winner"],
+      image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face&auto=format&q=80",
+      images: ["https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face&auto=format&q=80"],
+      description: "Exceptional writer and orator with outstanding communication skills.",
+      fullBio: "Alexander Thompson has demonstrated exceptional literary talent and communication skills throughout his academic career. His creative writing and analytical essays have earned recognition at state and national levels.",
+      subjects: [
+        { name: "English Literature", grade: "A+", score: "98%" },
+        { name: "Creative Writing", grade: "A+", score: "99%" },
+        { name: "History", grade: "A+", score: "96%" },
+        { name: "Philosophy", grade: "A", score: "95%" },
+        { name: "Public Speaking", grade: "A+", score: "97%" }
+      ],
+      extracurricular: [
+        "Literary Magazine Editor-in-Chief",
+        "Debate Team Captain",
+        "Drama Club President",
+        "Writing Workshop Leader"
+      ],
+      awards: [
+        { year: "2024", award: "State Writing Competition Winner", description: "First place in creative writing" },
+        { year: "2024", award: "Debate Championship", description: "Regional debate tournament winner" },
+        { year: "2023", award: "Literary Excellence Award", description: "Outstanding contribution to school publications" }
+      ],
+      futureGoals: "Alexander plans to pursue journalism and creative writing at Columbia University.",
+      universityAcceptances: [
+        "Columbia University - Journalism Program",
+        "Northwestern University - Medill School",
+        "Yale University - English Department",
+        "Princeton University - Creative Writing"
+      ],
+      testimonial: "Alexander's command of language and ability to articulate complex ideas makes him a natural leader and communicator.",
+      testimonialBy: "Prof. Margaret Wilson, English Department"
+    },
+    "priya-patel": {
+      id: 5,
+      name: "Priya Patel",
+      grade: "Grade 11",
+      subject: "science",
+      score: "97.1%",
+      year: "2024",
+      rank: 2,
+      achievements: ["Chemistry Excellence", "Lab Research Assistant", "STEM Leadership"],
+      image: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=400&fit=crop&crop=face&auto=format&q=80",
+      images: ["https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=400&fit=crop&crop=face&auto=format&q=80"],
+      description: "Chemistry enthusiast with groundbreaking laboratory research.",
+      fullBio: "Priya Patel has shown exceptional aptitude in chemistry and laboratory research. Her innovative experiments and analytical skills have contributed to published research papers.",
+      subjects: [
+        { name: "Advanced Chemistry", grade: "A+", score: "98%" },
+        { name: "Organic Chemistry", grade: "A+", score: "97%" },
+        { name: "Physics", grade: "A+", score: "96%" },
+        { name: "Mathematics", grade: "A", score: "95%" },
+        { name: "Biology", grade: "A+", score: "97%" }
+      ],
+      extracurricular: [
+        "Chemistry Club President",
+        "Research Assistant",
+        "Science Fair Coordinator",
+        "STEM Mentorship Program"
+      ],
+      awards: [
+        { year: "2024", award: "Chemistry Excellence Award", description: "Outstanding performance in chemistry" },
+        { year: "2024", award: "Research Publication", description: "Co-authored research paper" },
+        { year: "2023", award: "Science Fair Winner", description: "First place in regional science fair" }
+      ],
+      futureGoals: "Priya aims to pursue chemical engineering and pharmaceutical research.",
+      universityAcceptances: [
+        "MIT - Chemical Engineering",
+        "Stanford University - Chemistry Program",
+        "UC Berkeley - Research Scholarship",
+        "Caltech - Science Fellowship"
+      ],
+      testimonial: "Priya's dedication to scientific research and her innovative approach to problem-solving make her an exceptional student.",
+      testimonialBy: "Dr. Raj Sharma, Chemistry Department"
+    },
+    "michael-johnson": {
+      id: 6,
+      name: "Michael Johnson",
+      grade: "Grade 10",
+      subject: "mathematics",
+      score: "96.9%",
+      year: "2024",
+      rank: 2,
+      achievements: ["Calculus Prodigy", "Math Tutor", "Academic Excellence"],
+      image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop&crop=face&auto=format&q=80",
+      images: ["https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop&crop=face&auto=format&q=80"],
+      description: "Mathematical talent with exceptional analytical thinking.",
+      fullBio: "Michael Johnson has demonstrated remarkable mathematical abilities from an early age. His understanding of complex mathematical concepts and problem-solving skills are exceptional for his grade level.",
+      subjects: [
+        { name: "Advanced Calculus", grade: "A+", score: "99%" },
+        { name: "Algebra", grade: "A+", score: "98%" },
+        { name: "Geometry", grade: "A+", score: "97%" },
+        { name: "Statistics", grade: "A+", score: "96%" },
+        { name: "Physics", grade: "A", score: "95%" }
+      ],
+      extracurricular: [
+        "Math Club Vice President",
+        "Peer Tutor Program",
+        "Academic Competition Team",
+        "STEM Outreach Volunteer"
+      ],
+      awards: [
+        { year: "2024", award: "Math Excellence Award", description: "Outstanding mathematical achievement" },
+        { year: "2024", award: "Tutor of the Year", description: "Exceptional peer tutoring" },
+        { year: "2023", award: "Academic Competition Winner", description: "Regional math competition" }
+      ],
+      futureGoals: "Michael plans to pursue applied mathematics and engineering.",
+      universityAcceptances: [
+        "MIT - Mathematics Program",
+        "Stanford University - Applied Math",
+        "Caltech - Engineering",
+        "UC Berkeley - Mathematics"
+      ],
+      testimonial: "Michael's mathematical intuition and ability to explain complex concepts to others is truly remarkable.",
+      testimonialBy: "Dr. Robert Chen, Mathematics Department"
+    },
+    "isabella-rodriguez": {
+      id: 7,
+      name: "Isabella Rodriguez",
+      grade: "Grade 12",
+      subject: "overall",
+      score: "97.9%",
+      year: "2023",
+      rank: 1,
+      achievements: ["Class Valedictorian", "Student Council President", "Academic Excellence"],
+      image: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=400&h=400&fit=crop&crop=face&auto=format&q=80",
+      images: ["https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=400&h=400&fit=crop&crop=face&auto=format&q=80"],
+      description: "Exceptional all-around student with strong leadership skills.",
+      fullBio: "Isabella Rodriguez exemplified academic excellence and leadership during her time at Royal Academy. As valedictorian and student council president, she balanced outstanding academic performance with meaningful community service.",
+      subjects: [
+        { name: "Advanced Mathematics", grade: "A+", score: "98%" },
+        { name: "Physics", grade: "A+", score: "97%" },
+        { name: "Chemistry", grade: "A+", score: "98%" },
+        { name: "English Literature", grade: "A+", score: "99%" },
+        { name: "History", grade: "A", score: "96%" },
+        { name: "Spanish", grade: "A+", score: "99%" }
+      ],
+      extracurricular: [
+        "Student Council President",
+        "National Honor Society",
+        "Volunteer Coordinator",
+        "Academic Mentor Program"
+      ],
+      awards: [
+        { year: "2023", award: "Valedictorian", description: "Highest academic achievement in class" },
+        { year: "2023", award: "Leadership Excellence", description: "Outstanding student leadership" },
+        { year: "2022", award: "Community Service Award", description: "Exceptional community involvement" }
+      ],
+      futureGoals: "Isabella is pursuing pre-med studies with a focus on community health.",
+      universityAcceptances: [
+        "Harvard University - Pre-Med Program",
+        "Johns Hopkins - Biomedical Sciences",
+        "Stanford University - Biology",
+        "Yale University - Pre-Med Track"
+      ],
+      testimonial: "Isabella's combination of academic excellence and genuine care for others makes her an exceptional leader and role model.",
+      testimonialBy: "Dr. Sarah Johnson, Principal"
+    },
+    "david-kim": {
+      id: 8,
+      name: "David Kim",
+      grade: "Grade 11",
+      subject: "science",
+      score: "98.3%",
+      year: "2023",
+      rank: 1,
+      achievements: ["Physics Olympiad Gold", "Research Intern", "Innovation Award"],
+      image: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=400&h=400&fit=crop&crop=face&auto=format&q=80",
+      images: ["https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=400&h=400&fit=crop&crop=face&auto=format&q=80"],
+      description: "Physics prodigy with innovative experimental approaches.",
+      fullBio: "David Kim has shown exceptional talent in physics and experimental design. His innovative approaches to complex physics problems and his work as a research intern have earned him national recognition.",
+      subjects: [
+        { name: "Advanced Physics", grade: "A+", score: "99%" },
+        { name: "Quantum Mechanics", grade: "A+", score: "98%" },
+        { name: "Advanced Mathematics", grade: "A+", score: "97%" },
+        { name: "Computer Science", grade: "A+", score: "96%" },
+        { name: "Chemistry", grade: "A", score: "95%" }
+      ],
+      extracurricular: [
+        "Physics Club President",
+        "Research Intern",
+        "Science Olympiad Team",
+        "Innovation Lab Assistant"
+      ],
+      awards: [
+        { year: "2023", award: "Physics Olympiad Gold Medal", description: "National physics competition winner" },
+        { year: "2023", award: "Innovation Award", description: "Outstanding experimental design" },
+        { year: "2022", award: "Research Excellence", description: "Exceptional research contribution" }
+      ],
+      futureGoals: "David plans to pursue theoretical physics and quantum computing research.",
+      universityAcceptances: [
+        "MIT - Physics Program",
+        "Caltech - Theoretical Physics",
+        "Stanford University - Physics",
+        "Princeton University - Quantum Studies"
+      ],
+      testimonial: "David's innovative thinking and deep understanding of physics concepts make him a natural researcher and scientist.",
+      testimonialBy: "Dr. Michael Zhang, Physics Department"
     }
   };
 
-  const student = students[studentId as keyof typeof students];
+  // First try to find student in localStorage data
+  let student = allStudents.find(s => s.slug === studentId);
+  
+  // If not found in localStorage, try hardcoded data
+  if (!student) {
+    student = students[studentId as keyof typeof students];
+  }
+
+  // If student found in localStorage, create a compatible format
+  if (student && !student.fullBio) {
+    student = {
+      ...student,
+      fullBio: student.description || "Outstanding student with exceptional academic performance.",
+      subjects: [
+        { name: "Overall Performance", grade: "A+", score: student.score }
+      ],
+      extracurricular: student.achievements || [],
+      awards: student.achievements ? student.achievements.map((achievement: string, index: number) => ({
+        year: student.year,
+        award: achievement,
+        description: `Excellence in ${achievement}`
+      })) : [],
+      futureGoals: "Pursuing higher education with focus on academic excellence.",
+      universityAcceptances: [
+        "Top University - Merit Scholarship",
+        "Prestigious College - Academic Excellence Award"
+      ],
+      testimonial: `${student.name} is an exceptional student who demonstrates outstanding academic performance and dedication.`,
+      testimonialBy: "Faculty Member"
+    };
+  }
 
   if (!student) {
     return (

@@ -166,7 +166,7 @@ const Navigation = () => {
       transition={{ duration: 0.6, ease: "easeOut" }}
     >
       <div className="container-wide">
-        <div className="flex items-center justify-between h-20 px-6">
+        <div className="flex items-center justify-between h-16 sm:h-20 px-4 sm:px-6">
           
           {/* Logo with Dropdown (PC Only) */}
           <div className="relative">
@@ -181,14 +181,14 @@ const Navigation = () => {
                 <img
                   src={schoolLogo}
                   alt="Royal Academy"
-                  className="h-12 w-12 animate-glow group-hover:scale-110 transition-transform duration-300"
+                  className="h-8 w-8 sm:h-12 sm:w-12 animate-glow group-hover:scale-110 transition-transform duration-300"
                 />
               </div>
               <div className="flex flex-col">
-                <span className="text-xl font-heading font-bold text-gradient-gold">
+                <span className="text-lg sm:text-xl font-heading font-bold text-gradient-gold">
                   Royal Academy
                 </span>
-                <span className="text-xs text-muted-foreground tracking-wider">
+                <span className="text-xs text-muted-foreground tracking-wider hidden sm:block">
                   Excellence in Education
                 </span>
               </div>
@@ -261,7 +261,26 @@ const Navigation = () => {
                       </motion.div>
                     ))}
                   </div>
-                  
+                  {/* Authentication Links */}
+                <div className="border-t border-border pt-4 mt-4">
+                  <div className="text-xs font-semibold text-gold mb-3 px-4">SIGN IN</div>
+                  <Link
+                    to="/teacher"
+                    className="flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-300 font-medium text-foreground hover:text-gold hover:bg-gold/5"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <Users className="h-5 w-5" />
+                    <div>Teacher Login</div>
+                  </Link>
+                  <Link
+                    to="/student-login"
+                    className="flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-300 font-medium text-foreground hover:text-gold hover:bg-gold/5"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <GraduationCap className="h-5 w-5" />
+                    <div>Student Login</div>
+                  </Link>
+                </div>
                   {/* Dropdown Footer */}
                   <div className="border-t border-border bg-muted/20 p-4">
                     <div className="text-center">
@@ -279,18 +298,53 @@ const Navigation = () => {
           </div>
 
           {/* Right Side Actions */}
-          <div className="flex items-center space-x-3">
-            {/* Signup Button */}
-            <Link to="/signup">
-              <Button
-                variant="outline"
-                size="sm"
-                className="bg-gradient-to-r from-gold/10 to-yellow-500/10 hover:from-gold/20 hover:to-yellow-500/20 border-gold/30 text-gold hover:text-gold/80 transition-all duration-300"
-              >
-                Sign Up
-              </Button>
-            </Link>
-            
+          <div className="flex items-center space-x-1 sm:space-x-3">
+            {/* Dashboard buttons for logged-in users */}
+            {(() => {
+              const teacherAuth = localStorage.getItem("teacherAuth");
+              const studentAuth = localStorage.getItem("studentAuth");
+              
+              if (teacherAuth) {
+                return (
+                  <Link to="/teacher-dashboard" className="hidden sm:block">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="bg-gradient-to-r from-gold/10 to-yellow-500/10 hover:from-gold/20 hover:to-yellow-500/20 border-gold/30 text-gold hover:text-gold/80 transition-all duration-300"
+                    >
+                      Teacher Dashboard
+                    </Button>
+                  </Link>
+                );
+              }
+              
+              if (studentAuth) {
+                return (
+                  <Link to="/student-dashboard" className="hidden sm:block">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="bg-gradient-to-r from-royal/10 to-gold/10 hover:from-royal/20 hover:to-gold/20 border-royal/30 text-royal hover:text-royal/80 transition-all duration-300"
+                    >
+                      Student Dashboard
+                    </Button>
+                  </Link>
+                );
+              }
+              
+              // Show Sign Up button if not logged in
+              return (
+                <Link to="/auth" className="hidden sm:block">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="bg-gradient-to-r from-gold/10 to-yellow-500/10 hover:from-gold/20 hover:to-yellow-500/20 border-gold/30 text-gold hover:text-gold/80 transition-all duration-300"
+                  >
+                    Sign Up
+                  </Button>
+                </Link>
+              );
+            })()}
             <ThemeToggle />
             
             {/* Performance Mode Toggle */}
@@ -310,17 +364,17 @@ const Navigation = () => {
               }`} />
             </Button>
             
-            {/* Notification Bell */}
+            {/* Notification Bell - Always visible */}
             <div className="relative" data-notification-container>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowNotifications(!showNotifications)}
-                className="relative p-2 hover:bg-gold/10 transition-colors"
+                className="relative p-1 sm:p-2 hover:bg-gold/10 transition-colors"
               >
-                <Bell className="h-5 w-5 text-muted-foreground hover:text-gold transition-colors" />
+                <Bell className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground hover:text-gold transition-colors" />
                 {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center animate-pulse">
+                  <span className="absolute -top-0.5 -right-0.5 sm:-top-1 sm:-right-1 h-4 w-4 sm:h-5 sm:w-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center animate-pulse">
                     {unreadCount > 9 ? '9+' : unreadCount}
                   </span>
                 )}
@@ -334,7 +388,7 @@ const Navigation = () => {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -10, scale: 0.95 }}
                     transition={{ duration: 0.2, type: "spring", stiffness: 300 }}
-                    className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-background/95 backdrop-blur-xl border border-border rounded-2xl shadow-2xl z-50 max-h-96 overflow-hidden"
+                    className="absolute right-0 top-full mt-2 w-72 xs:w-80 sm:w-96 bg-background/95 backdrop-blur-xl border border-border rounded-2xl shadow-2xl z-50 max-h-96 overflow-hidden"
                   >
                     <div className="p-4 border-b border-border">
                       <div className="flex items-center justify-between">
@@ -432,10 +486,10 @@ const Navigation = () => {
             <Button
               variant="ghost"
               size="sm"
-              className="lg:hidden"
+              className="lg:hidden p-1 sm:p-2"
               onClick={() => setIsOpen(!isOpen)}
             >
-              {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              {isOpen ? <X className="h-4 w-4 sm:h-5 sm:w-5" /> : <Menu className="h-4 w-4 sm:h-5 sm:w-5" />}
             </Button>
           </div>
         </div>
@@ -451,6 +505,54 @@ const Navigation = () => {
               className="lg:hidden absolute top-full left-0 w-full overflow-hidden nav-scrolled"
             >
               <div className="px-6 py-4 space-y-2 max-h-[70vh] overflow-y-scroll mobile-nav-scroll">
+                {/* Mobile Dashboard/Sign Up Button - Top of Menu */}
+                <div className="mb-4">
+                  {(() => {
+                    const teacherAuth = localStorage.getItem("teacherAuth");
+                    const studentAuth = localStorage.getItem("studentAuth");
+                    
+                    if (teacherAuth) {
+                      return (
+                        <Link to="/teacher-dashboard">
+                          <Button
+                            variant="outline"
+                            className="w-full bg-gradient-to-r from-gold/10 to-yellow-500/10 hover:from-gold/20 hover:to-yellow-500/20 border-gold/30 text-gold hover:text-gold/80 transition-all duration-300"
+                            onClick={() => setIsOpen(false)}
+                          >
+                            Teacher Dashboard
+                          </Button>
+                        </Link>
+                      );
+                    }
+                    
+                    if (studentAuth) {
+                      return (
+                        <Link to="/student-dashboard">
+                          <Button
+                            variant="outline"
+                            className="w-full bg-gradient-to-r from-royal/10 to-gold/10 hover:from-royal/20 hover:to-gold/20 border-royal/30 text-royal hover:text-royal/80 transition-all duration-300"
+                            onClick={() => setIsOpen(false)}
+                          >
+                            Student Dashboard
+                          </Button>
+                        </Link>
+                      );
+                    }
+                    
+                    // Show Sign Up button if not logged in
+                    return (
+                      <Link
+                        to="/auth"
+                        className="w-full flex justify-center items-center space-x-2 px-4 py-3 rounded-lg bg-gradient-to-r from-gold to-yellow-500 text-black font-medium hover:from-gold/90 hover:to-yellow-500/90 transition-all duration-300"
+                        onClick={() => setIsOpen(false)}
+                      >
+                        <Users className="h-4 w-4" />
+                        <span>Sign Up</span>
+                      </Link>
+                    );
+                  })()}
+                </div>
+                
                 {navItems.map((item, index) => (
                   <motion.div
                     key={item.path}
@@ -536,6 +638,8 @@ const Navigation = () => {
                     </motion.div>
                   ))}
                 </div>
+
+                
 
                 {/* Mobile Performance Mode Toggle */}
                 <div className="border-t border-border pt-4 mt-4">
