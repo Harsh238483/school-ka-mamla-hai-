@@ -41,7 +41,7 @@ import PrincipalLogin from "./pages/PrincipalLogin";
 import PrincipalDashboard from "./pages/PrincipalDashboard";
 import TeacherLogin from "./pages/TeacherLogin";
 import TeacherDashboard from "./pages/TeacherDashboard";
-import StudentLogin from "./pages/StudentLoginNew";
+import StudentLogin from "./pages/StudentLogin";
 import StudentDashboard from "./pages/StudentDashboard";
 import AuthLanding from "./pages/AuthLanding";
 import CurriculumGuide from "./pages/CurriculumGuide";
