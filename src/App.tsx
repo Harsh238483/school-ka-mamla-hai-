@@ -41,7 +41,7 @@ import PrincipalLogin from "./pages/PrincipalLogin";
 import PrincipalDashboard from "./pages/PrincipalDashboard";
 import TeacherLogin from "./pages/TeacherLogin";
 import TeacherDashboard from "./pages/TeacherDashboard";
-import StudentLogin from "./pages/StudentLogin";
+import StudentAuth from "./pages/StudentAuth";
 import StudentDashboard from "./pages/StudentDashboard";
 import AuthLanding from "./pages/AuthLanding";
 import CurriculumGuide from "./pages/CurriculumGuide";
@@ -455,7 +455,7 @@ function AnimatedRoutes() {
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.4 }}
           >
-            <StudentLogin />
+            <StudentAuth />
           </motion.div>
         } />
         <Route path="/student-dashboard" element={
